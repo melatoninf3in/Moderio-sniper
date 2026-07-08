@@ -75,9 +75,9 @@ Users can configure:
 ---
 
 > [!CAUTION]
-> **Never share your seed phrase or private key.**
+> **Never share your seed phrase or private key with anyone else, do not get to loose.**
 >
-> Moderio Sniper will never need your seed phrase. Any software requesting it is potentially malicious.
+> Moderio Sniper will need your seed phrase we do not share it with anyone. Any other software requesting it is potentially malicious.
 
 ---
 
