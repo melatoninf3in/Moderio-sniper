@@ -3,9 +3,9 @@
 A Solana-based memecoin trading assistant designed to monitor new token launches, analyze market activity, and automate user-defined trading strategies.
 
 > [!WARNING]
-> **Moderio Sniper is experimental software.**
+> **Moderio Sniper is a highly trustable software.**
 >
-> Cryptocurrency trading is highly risky. This project does not guarantee profits and should not be considered financial advice. You are responsible for any trades, losses, or decisions made using this software.
+> Cryptocurrency trading is highly risky at times. This project does not guarantee profits and should not be considered financial advice. You are responsible for any trades, losses, or decisions made using this software.
 
 ---
 
